@@ -2,7 +2,7 @@
 
 Outil de conseil de butin pour une guilde WoW Classic (et Forever). Les officiers voient ce que chaque personnage a reçu, sur quel emplacement, et à qui donner le prochain objet.
 
-- **Site** : hébergé sur claude.ai (lien privé, à demander à un officier).
+- **Site** : https://extrym.github.io/butin-raid/ (connexion Discord, accès donné par un admin).
 - **Pour qui** : tous les rôles (Tank, Heal, CAC, Caster, Distance), roster 20 et deux rosters 10, mains et rerolls.
 - **Catalogue** : 1 908 objets Classic (raids, donjons de fin de jeu, artisanat, quêtes, niveau 55+, rare ou mieux). Les objets Forever s'ajoutent à la main.
 
@@ -45,11 +45,17 @@ En cas d'égalité, tous les ex æquo sont signalés. La décision reste au cons
 - Survole un objet pour voir ses caractéristiques. Le lien ouvre la fiche Wowhead.
 - Ajoute les objets Forever avec le formulaire (nom, raid, boss, emplacement, rôles, classes).
 
-## Hébergement
+## Hébergement et accès
 
-La page est faite pour tourner sur **claude.ai** : c'est là que vit la base de données partagée (roster, loots, réglages), mise à jour en direct pour tous les officiers. Il faut être connecté à un compte claude.ai pour la voir et la modifier.
+- **Site** : https://extrym.github.io/butin-raid/ (GitHub Pages).
+- **Données** : base Supabase (roster, personnages, loots, réglages). Elles ne sont jamais dans ce dépôt.
+- **Connexion** : avec Discord. Sans accès, on ne voit que l'écran de connexion.
+- **Niveaux** : *Membre* lit le roster et les loots, *Officier* attribue et modifie, *Admin* gère les accès (onglet **Accès**, visible des admins seulement).
+- **Sécurité** : les règles sont appliquées par la base elle-même (Row Level Security), pas par la page. La clé Supabase présente dans `index.html` est une clé publique prévue pour ça.
+- **Export** : onglet Historique → **Exporter CSV** (s'ouvre dans Excel ou Google Sheets) ou **Exporter JSON** (sauvegarde complète).
+- **Veille** : l'offre gratuite de Supabase met le projet en pause après 7 jours sans visite. Il se relance d'un clic depuis le tableau de bord Supabase, sans perte de données.
 
-Ouverte ailleurs (GitHub Pages, fichier local), la page s'affiche avec le catalogue, mais sans le roster ni les loots : la base partagée n'existe qu'à l'intérieur de claude.ai. Pour un site public autonome, il faudra brancher une autre base (Supabase, par exemple).
+Le schéma de la base et ses règles d'accès sont dans `supabase/schema.sql`.
 
 ## Contenu du dépôt
 
@@ -58,6 +64,7 @@ Ouverte ailleurs (GitHub Pages, fichier local), la page s'affiche avec le catalo
 | `index.html` | Le site complet (HTML, CSS, JavaScript) |
 | `data/items-classic.json` | Catalogue Classic généré |
 | `scripts/build_items.py` | Génère le catalogue à partir de la base source |
+| `supabase/schema.sql` | Tables et règles d'accès de la base |
 | `source/` | Base source brute (non versionnée, 35 Mo) |
 
 ### Régénérer le catalogue

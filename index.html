@@ -29,7 +29,9 @@
   --good:#4cc488; --bad:#ff7b72; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);padding-inline:16px;padding-block:0 64px}
+html{-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);padding-inline:16px;padding-block:0 64px}
 .wrap{max-width:1180px;margin:0 auto}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;padding-block:28px 18px;border-bottom:1px solid var(--line)}
 .eyebrow{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -132,6 +134,11 @@ body.ro .w{display:none!important}
 .tip .n.q-epic{color:#b76cff} .tip .n.q-legendary{color:#ff8a1f} .tip .n.q-rare{color:#3d8dff} .tip .n.q-common{color:#e9e6dc}
 .tip .m{color:#aab0c2;font-size:12px} .tip .g{color:#27e04a} .tip .src{color:#e3c46f;font-size:12px;margin-top:5px}
 .tip .row2{display:flex;justify-content:space-between;gap:12px}
+.who{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.gate{max-width:460px;margin:40px auto;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
+.discord{background:#5865F2;border-color:#5865F2;color:#fff;font-size:15px;padding:10px 18px}
+.discord:hover{border-color:#4752c4;background:#4752c4}
+body:not(.sa) .sa-only{display:none!important}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:9px;display:flex;gap:12px;align-items:center;font-size:14px;box-shadow:var(--shadow);max-width:calc(100% - 32px);z-index:10}
 .toast button{background:none;border:1px solid currentColor;color:inherit;border-radius:6px;padding:3px 9px;font:600 13px var(--sans);cursor:pointer}
 @media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
@@ -144,6 +151,7 @@ body.ro .w{display:none!important}
       <h1>Butin de <span>Raid</span></h1>
     </div>
     <div class="controls">
+      <span class="who" id="who" hidden></span>
       <div class="seg" role="group" aria-label="Version du jeu" id="verSeg">
         <button data-v="all">Tout</button><button data-v="classic">Classic</button><button data-v="forever">Forever</button>
       </div>
@@ -166,6 +174,7 @@ body.ro .w{display:none!important}
     <button data-t="history">Historique</button>
     <button data-t="roster">Roster</button>
     <button data-t="catalog">Catalogue</button>
+    <button data-t="access" id="tabAccess" hidden>Accès</button>
   </nav>
 
   <div class="status" id="status">Connexion au registre partagé…</div>
@@ -218,6 +227,7 @@ const S = {
   loaded:{players:false,members:false,items:false,loots:false},
   group: pref("group") || "all",
   version: pref("version") || "all", period: pref("period") || "60", tab: pref("tab") || "overview",
+  gate:null, level:"", sb:null, access:[],
   static:new Map(), catSrc:"", sheet:"", sheetAll:false, ovRole:"",
   ovSort:"least", histPlayer:"", histQ:"", catVersion:"classic", catQ:"",
   asg:{version:"classic", itemId:"", kind:"MS", date:today(), all:false, specs:new Set(), q:"", boss:"", raid:pref("raid")||"", roles:new Set(), rolesFor:""},
@@ -512,7 +522,11 @@ function vHistory(){
         <label class="f">Joueur<select id="histPlayer"><option value="">Tous</option>${sortedPlayers(false).map(p => `<option value="${esc(p.id)}"${p.id===S.histPlayer?" selected":""}>${esc(p.name)}</option>`).join("")}</select></label>
         <label class="f">Rechercher<input type="text" id="histQ" placeholder="Objet, joueur, boss" value="${esc(S.histQ)}"></label>
       </div>
-      <p class="sub">${list.length} loot${list.length>1?"s":""} · ${S.version==="all" ? "toutes versions" : VERS[S.version]}</p>
+      <div class="row" style="align-items:center">
+        <p class="sub">${list.length} loot${list.length>1?"s":""} · ${S.version==="all" ? "toutes versions" : VERS[S.version]}</p>
+        <button class="btn sa-only" data-export="csv">Exporter CSV</button>
+        <button class="btn sa-only" data-export="json">Exporter JSON</button>
+      </div>
     </div>
     ${list.length ? `<div class="tablewrap"><table>
       <thead><tr><th>Date</th><th>Joueur</th><th>Objet</th><th>Raid · boss</th><th>Type</th><th>Version</th><th>Noté par</th><th class="w"></th></tr></thead>
@@ -657,8 +671,11 @@ function render(){
   document.querySelectorAll("#tabs button").forEach(b => { b.setAttribute("role","tab"); b.setAttribute("aria-selected", b.dataset.t === S.tab); });
   const focusId = document.activeElement?.id, sel = document.activeElement?.selectionStart;
   const keep = {};
-  ["nmName","nmRole","npName","npOwner","npAlt","npCls","npSpec","niName","niRaid","niBoss","niSlot"].forEach(id => { const el = document.getElementById(id); if (el) keep[id] = el.value; });
-  const V = {overview:vOverview, assign:vAssign, history:vHistory, roster:vRoster, catalog:vCatalog}[S.tab] || vOverview;
+  ["acHandle","acLevel","nmName","nmRole","npName","npOwner","npAlt","npCls","npSpec","niName","niRaid","niBoss","niSlot"].forEach(id => { const el = document.getElementById(id); if (el) keep[id] = el.value; });
+  document.getElementById("tabs").hidden = !!S.gate;
+  document.getElementById("tabAccess").hidden = S.level !== "admin";
+  if (S.tab === "access" && S.level !== "admin") S.tab = "overview";
+  const V = S.gate ? vGate : ({overview:vOverview, assign:vAssign, history:vHistory, roster:vRoster, catalog:vCatalog, access:vAccess}[S.tab] || vOverview);
   document.getElementById("view").innerHTML = V();
   Object.entries(keep).forEach(([id,v]) => { const el = document.getElementById(id); if (!el) return;
     if (id === "npSpec") el.innerHTML = specOpts(document.getElementById("npCls").value);
@@ -674,12 +691,18 @@ document.getElementById("tabs").addEventListener("click", e => { const b = e.tar
 
 const view = document.getElementById("view");
 view.addEventListener("click", async e => {
-  const t = e.target.closest("[data-pick],[data-boss],[data-role],[data-kind],[data-ovrole],[data-sheet],[data-go],[data-hist],[data-give],[data-del-loot],[data-del-player],[data-del-item],#asgVer button,#catVer button");
+  const t = e.target.closest("[data-export],[data-login],[data-logout],[data-acc-del],[data-acc-add],[data-pick],[data-boss],[data-role],[data-kind],[data-ovrole],[data-sheet],[data-go],[data-hist],[data-give],[data-del-loot],[data-del-player],[data-del-item],#asgVer button,#catVer button");
   if (!t) return;
   if (t.dataset.sheet != null){ S.sheet = S.sheet === t.dataset.sheet ? "" : t.dataset.sheet; render(); if (S.sheet) window.scrollTo({top:0, behavior:"smooth"}); return; }
   if (t.dataset.go){ S.tab = t.dataset.go; pref("tab", S.tab); render(); return; }
   if (t.dataset.hist){ e.preventDefault(); S.histPlayer = t.dataset.hist; S.tab = "history"; pref("tab", S.tab); render(); return; }
   if (t.closest("#asgVer")){ S.asg.version = t.dataset.v; S.asg.raid = ""; S.asg.boss = ""; S.asg.itemId = ""; render(); return; }
+  if (t.dataset.export){ exportData(t.dataset.export); return; }
+  if (t.dataset.login != null){ S.sb.auth.signInWithOAuth({provider:"discord", options:{redirectTo: location.href.split("#")[0].split("?")[0]}}); return; }
+  if (t.dataset.logout != null){ await S.sb.auth.signOut(); location.reload(); return; }
+  if (t.dataset.accAdd){ const [h, lvl] = t.dataset.accAdd.split("|"); await setAccess(h, lvl); return; }
+  if (t.dataset.accDel){ if (!armed("a:"+t.dataset.accDel)) { arm("a:"+t.dataset.accDel); return; } S.armed = null;
+    const { error } = await S.sb.from("access").delete().eq("handle", t.dataset.accDel); if (error) toast("Suppression refusée."); else toast("Accès retiré."); await loadAccess(); return; }
   if (t.dataset.pick){ S.asg.itemId = t.dataset.pick; render(); return; }
   if (t.dataset.boss != null){ S.asg.boss = S.asg.boss === t.dataset.boss ? "" : t.dataset.boss; S.asg.itemId = ""; render(); return; }
   if (t.dataset.role){ const R = S.asg.roles; R.has(t.dataset.role) ? R.delete(t.dataset.role) : R.add(t.dataset.role); render(); return; }
@@ -726,6 +749,7 @@ view.addEventListener("change", async e => {
   else if (t.dataset.grp){ const p = S.players.get(t.dataset.grp); const g = new Set(p?.groups||[]); t.checked ? g.add(t.value) : g.delete(t.value); await write(db => db.doc("players/" + t.dataset.grp).update({groups:[...g]})); }
   else if (t.dataset.drole){ await write(db => db.doc("members/" + t.dataset.drole).update({role:t.value})); }
   else if (t.id === "rerollsCount"){ await write(db => db.doc("config/settings").set({...S.settings, rerollsCount:t.checked})); }
+  else if (t.dataset.accLevel){ await setAccess(t.dataset.accLevel, t.value); }
   else if (t.dataset.active){ await write(db => db.doc("players/" + t.dataset.active).update({active:t.checked})); }
 });
 view.addEventListener("input", e => {
@@ -740,6 +764,10 @@ view.addEventListener("keydown", e => {
 view.addEventListener("submit", async e => {
   e.preventDefault();
   const f = e.target;
+  if (f.id === "addAccess"){
+    const h = f.querySelector("#acHandle").value.trim().toLowerCase().replace(/^@/, ""); if (!h) return;
+    if (await setAccess(h, f.querySelector("#acLevel").value)) f.querySelector("#acHandle").value = "";
+  }
   if (f.id === "addMember"){
     const name = f.querySelector("#nmName").value.trim(); if (!name) return;
     if ([...S.members.values()].some(m => m.name.toLowerCase() === name.toLowerCase())) { toast(`${name} est déjà dans la liste des joueurs.`); return; }
@@ -804,8 +832,8 @@ fetch("data/items-classic.json").then(r => r.ok ? r.json() : Promise.reject(r.st
 }).catch(() => toast("Le catalogue Classic n’a pas pu être chargé. Recharge la page."));
 (async () => {
   const status = document.getElementById("status");
-  const use = window.claude?.use;
-  const [db, user] = use ? await Promise.all([window.claude.use("db"), window.claude.use("user")]) : [null, null];
+  if (!window.claude?.use) return bootStandalone(status);
+  const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
   if (!db){ status.textContent = "Le registre partagé n’est pas disponible dans cette vue. Ouvre la page depuis claude.ai en étant connecté."; S.canWrite = false; document.body.classList.add("ro"); render(); return; }
   S.db = db; S.user = user;
   if (user){
@@ -813,6 +841,10 @@ fetch("data/items-classic.json").then(r => r.ok ? r.json() : Promise.reject(r.st
     if (can === false){ S.canWrite = false; document.body.classList.add("ro"); }
     S.uid = await user.id();
   }
+  startData(db, status);
+})();
+
+function startData(db, status){
   const done = () => { if (Object.values(S.loaded).every(Boolean)) status.hidden = true; };
   const onErr = err => { if (err.code !== "revoked") { status.hidden = false; status.textContent = "La synchronisation s’est interrompue. Recharge la page pour la relancer."; } };
   const sub = (col, key, map) => db.collection(col).limit(1000).onSnapshot(snap => { map(snap.docs.map(d => ({id:d.id, ...d.data()}))); S.loaded[key] = true; done(); render(); }, onErr);
@@ -821,13 +853,172 @@ fetch("data/items-classic.json").then(r => r.ok ? r.json() : Promise.reject(r.st
   sub("loots", "loots", rows => { S.loots = rows; resolveNames(); });
   sub("members", "members", rows => { S.members = new Map(rows.map(r => [r.id, r])); });
   db.doc("config/settings").onSnapshot(d => { S.settings = {rerollsCount:false, ...(d.exists ? d.data() : {})}; render(); }, onErr);
-})();
+}
 
 async function resolveNames(){
-  if (!S.user) return;
+  if (!S.user){ S.loots.forEach(l => { if (l.by && !(l.by in S.names)) S.names[l.by] = l.by.startsWith("u_") ? "" : l.by; }); return; }
   const ids = [...new Set(S.loots.map(l => l.by).filter(id => id && !(id in S.names)))];
   if (!ids.length) return;
   ids.forEach(id => S.names[id] = "");
   try { const ps = await S.user.profiles(ids); ids.forEach(id => S.names[id] = ps[id]?.name || ""); render(); } catch(e){}
+}
+
+/* ================= Version autonome (GitHub Pages) : Supabase + connexion Discord ================= */
+const SUPA = { url:"https://oiobepwxootjiuwwcgak.supabase.co", key:"sb_publishable_Cs8Ts4cB-RXSfYqEGe_wIw_NDu-AQic",
+  lib:"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" };
+const LEVELS = {membre:"Membre (lecture)", officier:"Officier (écriture)", admin:"Admin (accès)"};
+
+function loadScript(src){ return new Promise((ok, ko) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = ko; document.head.append(el); }); }
+
+async function bootStandalone(status){
+  document.body.classList.add("sa");
+  if (!document.querySelector('meta[name="viewport"]')){ const m = document.createElement("meta"); m.name = "viewport"; m.content = "width=device-width,initial-scale=1"; document.head.append(m); }
+  try { await loadScript(SUPA.lib); } catch(e){ status.textContent = "Impossible de charger la connexion. Vérifie ta connexion internet et recharge."; return; }
+  const sb = S.sb = window.supabase.createClient(SUPA.url, SUPA.key);
+  const { data:{ session } } = await sb.auth.getSession();
+  status.hidden = true;
+  if (!session){ S.gate = {kind:"login"}; render(); return; }
+  const [{ data:level }, { data:handle }] = await Promise.all([sb.rpc("claim_access"), sb.rpc("my_handle")]);
+  const who = document.getElementById("who");
+  who.hidden = false;
+  who.innerHTML = `<span>@${esc(handle||"")}</span><button class="btn ghost" data-logout style="padding:3px 6px">Se déconnecter</button>`;
+  who.querySelector("[data-logout]").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+  if (!level){ S.gate = {kind:"denied", handle}; render(); return; }
+  S.level = level; S.uid = handle;
+  S.canWrite = level !== "membre";
+  if (!S.canWrite) document.body.classList.add("ro");
+  S.db = supaDb(sb);
+  status.hidden = false; status.textContent = "Chargement du registre…";
+  startData(S.db, status);
+  if (level === "admin") loadAccess();
+}
+
+function vGate(){
+  const g = S.gate;
+  if (g.kind === "login") return `<div class="panel"><div class="panel-b gate">
+    <h2>Connexion</h2>
+    <p class="sub">Ce registre est réservé à la guilde. Connecte-toi avec ton compte Discord : tu verras les loots si un officier t’a donné l’accès.</p>
+    <button class="btn discord" data-login>Se connecter avec Discord</button></div></div>`;
+  return `<div class="panel"><div class="panel-b gate">
+    <h2>Accès non autorisé</h2>
+    <p class="sub">Ton compte Discord <b>@${esc(g.handle||"?")}</b> n’a pas encore accès au registre. Donne ce pseudo à un admin de la guilde pour qu’il t’ajoute.</p>
+    <button class="btn" data-logout>Se déconnecter</button></div></div>`;
+}
+
+/* Même interface que la base claude.ai (collection / doc / onSnapshot), branchée sur la table `docs`. */
+function supaDb(sb){
+  const cache = new Map(), subs = new Map(), loading = new Map();
+  const newId = () => Array.from(crypto.getRandomValues(new Uint8Array(10)), b => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36]).join("");
+  const emit = col => (subs.get(col) || []).forEach(fn => fn());
+  const fail = e => ({ code: e?.code === "42501" ? "invalid_argument" : "unavailable", message: e?.message || "" });
+  function load(col){
+    if (!loading.has(col)) loading.set(col, sb.from("docs").select("id,data").eq("collection", col).then(({ data, error }) => {
+      if (error) throw fail(error);
+      cache.set(col, new Map(data.map(r => [r.id, r.data]))); emit(col);
+    }));
+    return loading.get(col);
+  }
+  sb.channel("docs-live").on("postgres_changes", { event:"*", schema:"public", table:"docs" }, ev => {
+    const row = ev.eventType === "DELETE" ? ev.old : ev.new;
+    if (!row?.collection || !cache.has(row.collection)) return;
+    if (ev.eventType === "DELETE") cache.get(row.collection).delete(row.id); else cache.get(row.collection).set(row.id, row.data);
+    emit(row.collection);
+  }).subscribe();
+  const snap = d => ({ id:d[0], exists:true, data:() => d[1], metadata:{} });
+  function subscribe(col, fn, err){
+    if (!subs.has(col)) subs.set(col, new Set());
+    subs.get(col).add(fn);
+    if (cache.has(col)) fn(); else load(col).catch(e => err && err(e));
+    return () => subs.get(col).delete(fn);
+  }
+  async function put(col, id, data){
+    const { error } = await sb.from("docs").upsert({ collection:col, id, data, updated_at:new Date().toISOString() });
+    if (error) throw fail(error);
+    if (!cache.has(col)) cache.set(col, new Map());
+    cache.get(col).set(id, data); emit(col);
+  }
+  function docRef(col, id){
+    return { id, path: col + "/" + id,
+      set: data => put(col, id, data),
+      update: async patch => { await load(col); const cur = cache.get(col)?.get(id); if (!cur) throw { code:"invalid_argument" }; return put(col, id, { ...cur, ...patch }); },
+      delete: async () => { const { error } = await sb.from("docs").delete().match({ collection:col, id }); if (error) throw fail(error); cache.get(col)?.delete(id); emit(col); },
+      onSnapshot: (next, err) => subscribe(col, () => { const d = cache.get(col)?.get(id); next({ id, exists:!!d, data:() => d, metadata:{} }); }, err) };
+  }
+  function colRef(col){
+    const q = { limit: () => q, orderBy: () => q,
+      onSnapshot: (next, err) => subscribe(col, () => { const docs = [...(cache.get(col) || new Map())].map(snap); next({ docs, size:docs.length, empty:!docs.length, metadata:{} }); }, err),
+      doc: id => docRef(col, id || newId()) };
+    return q;
+  }
+  return { collection: colRef, doc: path => { const [c, i] = path.split("/"); return docRef(c, i); } };
+}
+
+/* ---------- écran Accès (admin) ---------- */
+async function loadAccess(){
+  const { data, error } = await S.sb.from("access").select("handle,discord_id,level").order("handle");
+  if (!error){ S.access = data; render(); }
+}
+async function setAccess(handle, level){
+  const h = handle.toLowerCase();
+  const exists = S.access.some(a => a.handle === h);
+  const { error } = exists ? await S.sb.from("access").update({ level }).eq("handle", h) : await S.sb.from("access").insert({ handle:h, level });
+  if (error){ toast("Modification refusée : seuls les admins gèrent les accès."); return false; }
+  toast(`@${h} : ${LEVELS[level]}.`); await loadAccess(); return true;
+}
+function vAccess(){
+  const me = S.uid;
+  const known = new Set(S.access.map(a => a.handle));
+  const pending = sortedMembers().filter(m => m.discord && !known.has(m.discord.toLowerCase()));
+  return `<div class="stack">
+    <div class="panel">
+      <div class="panel-h"><div><h2>Qui a accès</h2><p class="sub">Membre : lit le roster et les loots. Officier : attribue les loots et modifie le roster. Admin : gère cette liste.</p></div></div>
+      <div class="panel-b" style="border-bottom:1px solid var(--line)">
+        <form id="addAccess" class="row" autocomplete="off">
+          <label class="f">Pseudo Discord<input type="text" id="acHandle" required maxlength="40" placeholder="Ex. extrym."></label>
+          <label class="f">Niveau<select id="acLevel">${Object.entries(LEVELS).map(([k,n]) => `<option value="${k}">${n}</option>`).join("")}</select></label>
+          <button class="btn primary" type="submit">Donner l’accès</button>
+        </form>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Pseudo Discord</th><th>Niveau</th><th>Connexion</th><th></th></tr></thead>
+        <tbody>${S.access.map(a => `<tr>
+          <td><b>@${esc(a.handle)}</b>${a.handle === me ? ' <span class="small muted">(toi)</span>' : ""}</td>
+          <td><select data-acc-level="${esc(a.handle)}" ${a.handle === me ? "disabled" : ""}>${Object.entries(LEVELS).map(([k,n]) => `<option value="${k}"${k===a.level?" selected":""}>${n}</option>`).join("")}</select></td>
+          <td class="small muted">${a.discord_id ? "Déjà connecté" : "Jamais connecté"}</td>
+          <td style="text-align:right">${a.handle === me ? "" : `<button class="btn ${armed("a:"+a.handle)?"danger":"ghost"}" data-acc-del="${esc(a.handle)}">${armed("a:"+a.handle)?"Confirmer":"Retirer"}</button>`}</td>
+        </tr>`).join("")}</tbody></table></div>
+    </div>
+    ${pending.length ? `<div class="panel">
+      <div class="panel-h"><div><h2>Joueurs du roster sans accès</h2><p class="sub">Un clic pour leur ouvrir le registre.</p></div></div>
+      <div class="tablewrap"><table><tbody>${pending.map(m => `<tr>
+        <td><b>${esc(m.name)}</b> <span class="small muted">@${esc(m.discord)} · ${esc(m.role||"")}</span></td>
+        <td style="text-align:right;white-space:nowrap"><button class="btn" data-acc-add="${esc(m.discord.toLowerCase())}|membre">Membre</button> <button class="btn" data-acc-add="${esc(m.discord.toLowerCase())}|officier">Officier</button></td>
+      </tr>`).join("")}</tbody></table></div>
+    </div>` : ""}
+  </div>`;
+}
+
+/* ---------- export ---------- */
+function exportData(kind){
+  const day = today();
+  const rows = [...S.loots].sort((a,b) => (a.date+a.createdAt).localeCompare(b.date+b.createdAt)).map(l => {
+    const p = S.players.get(l.playerId), it = getItem(l.itemId);
+    return { date:l.date, personnage:p?.name || "", joueur:memberName(p?.owner) || "", classe:p ? clsName(p.cls) : "", spe:p?.spec || "",
+      objet:l.itemName, id_objet:(l.itemId||"").replace(/^c:/, ""), emplacement:it?.slot || "", source:l.raid || "", boss:l.boss || "",
+      type:KINDS[l.kind] || l.kind, version:VERS[l.version] || l.version, groupe:GROUPS[l.group] || "", note_par:S.names[l.by] || "" };
+  });
+  let blob, name;
+  if (kind === "csv"){
+    const cols = Object.keys(rows[0] || {date:""});
+    const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    blob = new Blob(["\ufeff" + [cols.join(";"), ...rows.map(r => cols.map(c => cell(r[c])).join(";"))].join("\r\n")], {type:"text/csv;charset=utf-8"});
+    name = `loots-${day}.csv`;
+  } else {
+    blob = new Blob([JSON.stringify({ exporte_le:new Date().toISOString(), joueurs:[...S.members.values()], personnages:[...S.players.values()], loots:S.loots, reglages:S.settings }, null, 2)], {type:"application/json"});
+    name = `butin-raid-${day}.json`;
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast(`${name} téléchargé.`);
 }
 </script>
