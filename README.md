@@ -4,7 +4,7 @@ Outil de conseil de butin pour une guilde WoW Classic (et Forever). Les officier
 
 - **Site** : https://extrym.github.io/butin-raid/ (connexion Discord, accès donné par un admin).
 - **Pour qui** : tous les rôles (Tank, Heal, CAC, Caster, Distance), roster 20 et deux rosters 10, mains et rerolls.
-- **Catalogue** : 1 908 objets Classic (raids, donjons de fin de jeu, artisanat, quêtes, niveau 55+, rare ou mieux). Les objets Forever s'ajoutent à la main.
+- **Catalogue** : 1 908 objets Classic (raids, donjons de fin de jeu, artisanat, quêtes, niveau 55+, rare ou mieux) et 855 objets Forever **provisoires** tirés du client bêta. On peut aussi ajouter des objets à la main.
 
 ## Utilisation
 
@@ -63,7 +63,9 @@ Le schéma de la base et ses règles d'accès sont dans `supabase/schema.sql`.
 |---|---|
 | `index.html` | Le site complet (HTML, CSS, JavaScript) |
 | `data/items-classic.json` | Catalogue Classic généré |
-| `scripts/build_items.py` | Génère le catalogue à partir de la base source |
+| `scripts/build_items.py` | Génère le catalogue Classic |
+| `scripts/build_forever.py` | Génère le catalogue Forever provisoire |
+| `data/items-forever.json` | Catalogue Forever généré |
 | `supabase/schema.sql` | Tables et règles d'accès de la base |
 | `source/` | Base source brute (non versionnée, 35 Mo) |
 
@@ -78,6 +80,16 @@ python3 scripts/build_items.py
 
 Le script garde les objets Classic de qualité rare ou mieux, niveau requis 55+ (ou niveau d'objet 57+), venant d'un raid, d'un donjon de fin de jeu, de l'artisanat ou d'une quête. Il déduit aussi les classes qui portent chaque objet et les rôles intéressés d'après ses caractéristiques.
 
+### Catalogue Forever (provisoire)
+
+```sh
+mkdir -p source/forever
+curl -L -o source/forever/db.json https://raw.githubusercontent.com/ElliotWood/Forever/HEAD/assets/database/db.json
+python3 scripts/build_forever.py
+```
+
+Garde les objets nouveaux de Forever (identifiant ≥ 250000), rare ou mieux, niveau d'objet 55+. Les caractéristiques viennent du client bêta et peuvent changer. La source de la plupart des objets (boss, réputation) est inconnue avant la sortie : les raids ouvrent le 9 décembre 2026. Relance le script après les mises à jour du projet source.
+
 ## Crédits
 
-Données d'objets : [nexus-devs/wow-classic-items](https://github.com/nexus-devs/wow-classic-items) (licence MIT).
+Données d'objets : [nexus-devs/wow-classic-items](https://github.com/nexus-devs/wow-classic-items) (licence MIT) pour Classic, [ElliotWood/Forever](https://github.com/ElliotWood/Forever) (licence MIT) pour Forever.

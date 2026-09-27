@@ -418,17 +418,19 @@ function emptyRoster(){
 /* Catalogue Classic importé (data/items-classic.json) + objets ajoutés à la main (base partagée, dont Forever). */
 const RAID_ORDER = ["Molten Core","Onyxia","Zul'Gurub","Blackwing Lair","Ruines d'Ahn'Qiraj","Temple d'Ahn'Qiraj","Naxxramas"];
 function fromStatic(x){
-  return { id:"c:" + x.id, name:x.name, version:"classic", raid:x.src.zone, boss:x.src.boss, srcType:x.src.t,
+  const fv = x.version === "forever";
+  return { id:(fv ? "f:" : "c:") + x.id, name:x.name, version:fv ? "forever" : "classic", provisional:!!x.provisional, raid:x.src.zone, boss:x.src.boss, srcType:x.src.t,
     slot:[x.slot, x.type].filter(Boolean).join(" · "), quality:x.quality, classes:x.classes, restricted:x.restricted,
-    ilvl:x.ilvl, drop:x.src.drop, stats:x.stats || [], roles:x.roles || [], link:"https://www.wowhead.com/classic/item=" + x.id, static:true };
+    ilvl:x.ilvl, drop:x.src.drop, stats:x.stats || [], roles:x.roles || [], link:`https://www.wowhead.com/${fv ? "forever" : "classic"}/item=${x.id}`, static:true };
 }
 function getItem(id){ return S.items.get(id) || S.static.get(id); }
-function itemsFor(version){ return [...S.items.values(), ...(version === "classic" ? S.static.values() : [])].filter(i => i.version === version); }
+function itemsFor(version){ return [...S.items.values(), ...S.static.values()].filter(i => i.version === version); }
 function srcRank(zone){
   const i = RAID_ORDER.indexOf(zone);
   if (i >= 0) return i;
   if (zone === "Artisanat") return 30;
   if (zone === "Quête") return 40;
+  if (zone === "Source à confirmer") return 45;
   return [...S.static.values()].some(x => x.raid === zone && x.srcType === "dungeon") ? 20 : 10;
 }
 function raidsFor(version){ return [...new Set(itemsFor(version).map(i => i.raid||"Autre"))].sort((a,b) => srcRank(a) - srcRank(b) || a.localeCompare(b,"fr")); }
@@ -505,7 +507,7 @@ function vAssign(){
       ${bosses.length ? `<div class="chips" role="group" aria-label="Boss">${bosses.map(b => `<button class="chipbtn" data-boss="${esc(b)}" aria-pressed="${a.boss===b}">${esc(b)}</button>`).join("")}</div>` : ""}
       ${shown.length ? `<div class="results" role="listbox" aria-label="Objets">${shown.map(i => `<button class="itemrow" role="option" data-pick="${esc(i.id)}" aria-selected="${i.id===a.itemId}">
           <span class="${itemCls(i.quality)}" data-item="${esc(i.id)}">${esc(i.name)}</span>
-          <span class="s">${esc(i.slot||"")}${!a.boss && i.boss ? " · " + esc(i.boss) : ""}${(i.roles||[]).length ? " · " + i.roles.map(k => ROLES[k]).join("/") : ""}</span></button>`).join("")}</div>
+          <span class="s">${i.provisional ? "bêta · " : ""}${esc(i.slot||"")}${!a.boss && i.boss ? " · " + esc(i.boss) : ""}${(i.roles||[]).length ? " · " + i.roles.map(k => ROLES[k]).join("/") : ""}</span></button>`).join("")}</div>
         ${pool.length > shown.length ? `<p class="sub">${pool.length} objets : précise la recherche.</p>` : ""}`
         : (aq || a.boss) ? `<p class="sub">Aucun objet ne correspond.</p>` : `<p class="sub">${a.raid ? "Choisis un boss, ou tape un nom." : "Astuce : tape 3 lettres puis Entrée pour prendre le premier résultat."}</p>`}
       ${!itemsFor(a.version).length && a.version === "forever" ? `<p class="sub">Le catalogue Forever se remplit au fil des annonces. Ajoute les objets dans l’onglet Catalogue.</p>` : ""}
@@ -808,6 +810,7 @@ function tipItem(id, name){
   return `<div class="n q-${esc(it.quality||"epic")}">${esc(it.name)}</div>
     <div class="row2 m"><span>${esc(it.slot||"")}</span>${it.ilvl ? `<span>Niv. ${it.ilvl}</span>` : ""}</div>
     ${stat.map(x => `<div class="${/^(Equip|Use|Chance on hit):/.test(x) ? "g" : ""}">${esc(x)}</div>`).join("")}
+    ${it.provisional ? '<div class="m">Forever : données bêta, provisoires</div>' : ""}
     <div class="src">${esc([it.raid, it.boss].filter(Boolean).join(" · "))}${it.drop ? ` · ${(it.drop*100).toFixed(1).replace(".",",")} %` : ""}</div>
     ${cls.length && cls.length < 6 ? `<div class="m">${cls.map(clsName).join(", ")}</div>` : ""}`;
 }
@@ -831,9 +834,10 @@ addEventListener("scroll", () => { tipEl.hidden = true; }, {passive:true});
 
 /* ---------- boot ---------- */
 render();
-fetch("data/items-classic.json").then(r => r.ok ? r.json() : Promise.reject(r.status)).then(arr => {
-  S.static = new Map(arr.map(x => { const i = fromStatic(x); return [i.id, i]; })); render();
-}).catch(() => toast("Le catalogue Classic n’a pas pu être chargé. Recharge la page."));
+const getJson = f => fetch(f).then(r => r.ok ? r.json() : Promise.reject(r.status));
+Promise.all([getJson("data/items-classic.json"), getJson("data/items-forever.json").catch(() => [])]).then(([c, f]) => {
+  S.static = new Map([...c, ...f].map(x => { const i = fromStatic(x); return [i.id, i]; })); render();
+}).catch(() => toast("Le catalogue n’a pas pu être chargé. Recharge la page."));
 (async () => {
   const status = document.getElementById("status");
   if (!window.claude?.use) return bootStandalone(status).catch(e => { status.hidden = false; status.textContent = "Erreur au démarrage : " + (e?.message || e) + ". Recharge la page ; si ça persiste, transmets ce message."; });
