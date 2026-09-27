@@ -214,6 +214,10 @@ const GROUPS = {r20:"Roster 20", r10a:"Roster 10 A", r10b:"Roster 10 B"};
 const DROLES = ["Membre","Roster","Admin"];
 const KINDS = {BiS:"BiS", MS:"Spé principale", OS:"Hors-spé"};
 const VERS = {classic:"Classic", forever:"Forever"};
+/* Version autonome (GitHub Pages) : défini ici, avant le démarrage qui en a besoin. */
+const SUPA = { url:"https://oiobepwxootjiuwwcgak.supabase.co", key:"sb_publishable_Cs8Ts4cB-RXSfYqEGe_wIw_NDu-AQic",
+  lib:"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" };
+const LEVELS = {membre:"Membre (lecture)", officier:"Officier (écriture)", admin:"Admin (accès)"};
 const QUALS = {epic:"Épique", legendary:"Légendaire", rare:"Rare", common:"Autre"};
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -832,7 +836,7 @@ fetch("data/items-classic.json").then(r => r.ok ? r.json() : Promise.reject(r.st
 }).catch(() => toast("Le catalogue Classic n’a pas pu être chargé. Recharge la page."));
 (async () => {
   const status = document.getElementById("status");
-  if (!window.claude?.use) return bootStandalone(status);
+  if (!window.claude?.use) return bootStandalone(status).catch(e => { status.hidden = false; status.textContent = "Erreur au démarrage : " + (e?.message || e) + ". Recharge la page ; si ça persiste, transmets ce message."; });
   const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
   if (!db){ status.textContent = "Le registre partagé n’est pas disponible dans cette vue. Ouvre la page depuis claude.ai en étant connecté."; S.canWrite = false; document.body.classList.add("ro"); render(); return; }
   S.db = db; S.user = user;
@@ -864,9 +868,6 @@ async function resolveNames(){
 }
 
 /* ================= Version autonome (GitHub Pages) : Supabase + connexion Discord ================= */
-const SUPA = { url:"https://oiobepwxootjiuwwcgak.supabase.co", key:"sb_publishable_Cs8Ts4cB-RXSfYqEGe_wIw_NDu-AQic",
-  lib:"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" };
-const LEVELS = {membre:"Membre (lecture)", officier:"Officier (écriture)", admin:"Admin (accès)"};
 
 function loadScript(src){ return new Promise((ok, ko) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = ko; document.head.append(el); }); }
 
