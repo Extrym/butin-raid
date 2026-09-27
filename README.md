@@ -1,0 +1,76 @@
+# Butin de Raid
+
+Outil de conseil de butin pour une guilde WoW Classic (et Forever). Les officiers voient ce que chaque personnage a reçu, sur quel emplacement, et à qui donner le prochain objet.
+
+- **Site** : hébergé sur claude.ai (lien privé, à demander à un officier).
+- **Pour qui** : tous les rôles (Tank, Heal, CAC, Caster, Distance), roster 20 et deux rosters 10, mains et rerolls.
+- **Catalogue** : 1 908 objets Classic (raids, donjons de fin de jeu, artisanat, quêtes, niveau 55+, rare ou mieux). Les objets Forever s'ajoutent à la main.
+
+## Utilisation
+
+### Avant le premier raid
+
+1. **Roster → Joueurs** : une ligne par personne du Discord, avec son rôle (Membre, Roster, Admin).
+2. **Roster → Personnages** : pour chaque joueur, son main et ses rerolls, avec la classe, la **spé** (elle détermine le rôle) et les groupes (Roster 20, Roster 10 A, Roster 10 B).
+3. **Roster → Règle de comptage** : coche « Les loots des rerolls comptent pour le joueur » si un joueur servi sur son reroll doit passer après les autres.
+
+### Pendant le raid : attribuer un objet
+
+1. Onglet **Attribuer un objet**.
+2. Choisis le raid (il reste en mémoire), puis clique sur le boss. Ou tape 3 lettres du nom de l'objet et appuie sur Entrée.
+3. Les candidats s'affichent, filtrés par classe et par rôle, du moins servi au plus servi. Clique sur un bouton de rôle pour l'ajouter ou le retirer.
+4. Choisis le type (BiS, Spé principale, Hors-spé), puis **Donner**. Un bouton « Annuler » reste affiché quelques secondes.
+
+Pour que le loot soit rattaché à un groupe, choisis le groupe (Roster 20, 10 A, 10 B) dans le filtre en haut avant d'attribuer.
+
+**Ordre de suggestion** :
+1. Classe et rôle qui conviennent à l'objet.
+2. N'a pas déjà l'objet.
+3. Le moins de loots principaux (BiS et spé principale) sur la période choisie, autres personnages compris selon la règle de comptage.
+4. Le dernier loot le plus ancien.
+5. Raider avant Trial.
+
+En cas d'égalité, tous les ex æquo sont signalés. La décision reste au conseil.
+
+### Après le raid : qui a eu quoi
+
+- **Tableau des loots** : une ligne par personnage, une colonne par emplacement (Tête, Mains, Jambes, Armes…). Survole un chiffre pour voir les objets.
+- **Fiche personnage** : clique sur un nom pour voir ses totaux et ses objets rangés par emplacement. Coche « Inclure ses autres personnages » pour tout le joueur.
+- **Historique** : tous les loots, filtrables par personnage ou par recherche. Un loot peut être supprimé.
+- Les filtres du haut (version, groupe, période) s'appliquent partout.
+
+### Catalogue
+
+- Recherche et filtre par source.
+- Survole un objet pour voir ses caractéristiques. Le lien ouvre la fiche Wowhead.
+- Ajoute les objets Forever avec le formulaire (nom, raid, boss, emplacement, rôles, classes).
+
+## Hébergement
+
+La page est faite pour tourner sur **claude.ai** : c'est là que vit la base de données partagée (roster, loots, réglages), mise à jour en direct pour tous les officiers. Il faut être connecté à un compte claude.ai pour la voir et la modifier.
+
+Ouverte ailleurs (GitHub Pages, fichier local), la page s'affiche avec le catalogue, mais sans le roster ni les loots : la base partagée n'existe qu'à l'intérieur de claude.ai. Pour un site public autonome, il faudra brancher une autre base (Supabase, par exemple).
+
+## Contenu du dépôt
+
+| Chemin | Rôle |
+|---|---|
+| `index.html` | Le site complet (HTML, CSS, JavaScript) |
+| `data/items-classic.json` | Catalogue Classic généré |
+| `scripts/build_items.py` | Génère le catalogue à partir de la base source |
+| `source/` | Base source brute (non versionnée, 35 Mo) |
+
+### Régénérer le catalogue
+
+```sh
+mkdir -p source
+curl -L -o source/items-classic.json https://raw.githubusercontent.com/nexus-devs/wow-classic-items/master/data/json/data.json
+curl -L -o source/zones.json https://raw.githubusercontent.com/nexus-devs/wow-classic-items/master/data/json/zones.json
+python3 scripts/build_items.py
+```
+
+Le script garde les objets Classic de qualité rare ou mieux, niveau requis 55+ (ou niveau d'objet 57+), venant d'un raid, d'un donjon de fin de jeu, de l'artisanat ou d'une quête. Il déduit aussi les classes qui portent chaque objet et les rôles intéressés d'après ses caractéristiques.
+
+## Crédits
+
+Données d'objets : [nexus-devs/wow-classic-items](https://github.com/nexus-devs/wow-classic-items) (licence MIT).

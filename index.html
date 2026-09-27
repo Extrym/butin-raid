@@ -1,0 +1,833 @@
+<title>Butin de Raid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eceef2; --surface:#ffffff; --surface-2:#f4f5f8; --ink:#1b1e26; --muted:#5a6170; --line:#d6dae2;
+  --accent:#8f6310; --accent-soft:#f3e7cc; --accent-ink:#ffffff;
+  --epic:#7a2fc6; --legend:#b85600; --rare:#0a5fc0; --common:#3f4452;
+  --good:#1d7446; --bad:#b3261e; --shadow:0 1px 2px rgba(20,24,34,.06),0 6px 24px rgba(20,24,34,.06);
+  --display:"Cinzel","Trajan Pro",Georgia,serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0f1117; --surface:#171a22; --surface-2:#1e222c; --ink:#e8e4d9; --muted:#9aa0ad; --line:#2b303c;
+    --accent:#d8b25a; --accent-soft:#2e2717; --accent-ink:#1a1406;
+    --epic:#b574ff; --legend:#ff9b3d; --rare:#4d9fff; --common:#c9ccd4;
+    --good:#4cc488; --bad:#ff7b72; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1117; --surface:#171a22; --surface-2:#1e222c; --ink:#e8e4d9; --muted:#9aa0ad; --line:#2b303c;
+  --accent:#d8b25a; --accent-soft:#2e2717; --accent-ink:#1a1406;
+  --epic:#b574ff; --legend:#ff9b3d; --rare:#4d9fff; --common:#c9ccd4;
+  --good:#4cc488; --bad:#ff7b72; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;padding-block:28px 18px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,36px);margin:2px 0 0;letter-spacing:.02em;text-wrap:balance}
+h1 span{color:var(--accent)}
+h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;color:var(--muted);padding:7px 12px;font:500 13.5px var(--sans);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+select,input[type=text],input[type=date]{font:14px var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 9px;min-width:0;max-width:100%}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:500;min-width:0}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:600 13.5px var(--sans);border-radius:7px;padding:7px 13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted);padding:5px 8px}
+.btn.ghost:hover{color:var(--bad)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;padding-block:14px 0;border-bottom:1px solid var(--line);margin-bottom:22px}
+nav.tabs button{border:0;background:none;padding:10px 14px;font:600 14px var(--sans);color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.status{font-size:13px;color:var(--muted);padding:10px 12px;border:1px dashed var(--line);border-radius:8px;margin-bottom:16px}
+.status[hidden]{display:none}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+.panel-h{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.panel-b{padding:16px}
+.sub{color:var(--muted);font-size:13px;margin:0}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.pname{display:flex;align-items:center;gap:9px;font-weight:600;white-space:nowrap}
+.cdot{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+.chip.bis{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:600}
+.chip.os{color:var(--muted)}
+.chip.sugg{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.chip.have{color:var(--bad);border-color:var(--bad)}
+.chip.ver{font-family:var(--mono);font-size:11px;letter-spacing:.04em}
+.item{font-weight:600}
+.q-epic{color:var(--epic)} .q-legendary{color:var(--legend)} .q-rare{color:var(--rare)} .q-common{color:var(--common)}
+.items-cell{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px;max-width:420px}
+.bar{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.bar i{display:block;height:6px;border-radius:3px;background:var(--accent);opacity:.75}
+.grid-assign{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.grid-assign{grid-template-columns:minmax(0,1fr)}}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.row > label.f{flex:1 1 140px}
+.itemcard{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:6px}
+.itemcard .nm{font-size:16px}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+a{color:var(--rare)}
+.rule{font-size:12.5px;color:var(--muted);border-left:2px solid var(--accent);padding-left:10px;margin:0}
+.summary{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:14px;color:var(--muted)}
+.summary b{color:var(--ink);font-family:var(--mono);font-weight:500}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.raidh{font-family:var(--display);font-size:14px;letter-spacing:.06em;color:var(--accent);padding:14px 12px 6px;background:var(--surface)}
+.checks{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px}
+.checks label{display:inline-flex;gap:5px;align-items:center}
+body.ro .w{display:none!important}
+.matrix td.sl,.matrix th.sl{text-align:center;padding-inline:6px;min-width:44px}
+.matrix th.sl{font-size:10px;letter-spacing:.06em}
+.matrix td.sl span{display:inline-block;min-width:22px;padding:1px 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-family:var(--mono);font-size:12.5px;cursor:default}
+.matrix td.sl.zero{color:var(--line)}
+.matrix tr.sel td{background:var(--accent-soft)}
+.pbtn{background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;text-align:left}
+.pbtn:hover .pn{text-decoration:underline}
+.kpis{display:flex;flex-wrap:wrap;gap:10px 28px}
+.kpi b{display:block;font-family:var(--mono);font-size:22px;font-weight:500;color:var(--ink)}
+.kpi span{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.slotgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.slot{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface-2);display:flex;flex-direction:column;gap:6px;min-width:0}
+.slot.empty{opacity:.55}
+.slot h3{margin:0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;justify-content:space-between}
+.slot .li{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;align-items:baseline}
+.slot .li .d{font-size:11.5px;color:var(--muted);white-space:nowrap;font-family:var(--mono)}
+[data-item]{cursor:help}
+.search{font-size:16px!important;padding:10px 12px!important;width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{font:500 13px var(--sans);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
+.chipbtn:hover{border-color:var(--accent)}
+.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chipbtn .ct{opacity:.7;font-family:var(--mono);font-size:11.5px;margin-left:4px}
+.results{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden;max-height:420px;overflow-y:auto}
+.itemrow{display:flex;flex-direction:column;gap:1px;text-align:left;border:0;border-bottom:1px solid var(--line);background:var(--surface);padding:8px 11px;cursor:pointer;font:14px var(--sans);color:var(--ink)}
+.itemrow:last-child{border-bottom:0}
+.itemrow:hover{background:var(--surface-2)}
+.itemrow[aria-selected="true"]{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.itemrow .s{font-size:12px;color:var(--muted)}
+.step{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.role{font-size:11px;font-weight:600;letter-spacing:.04em;padding:1px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tip{position:fixed;z-index:20;max-width:320px;background:#0d1122;border:1px solid #5a6a91;border-radius:6px;padding:9px 11px;color:#e9e6dc;font:13px/1.4 var(--sans);box-shadow:0 8px 28px rgba(0,0,0,.45);pointer-events:none}
+.tip .n{font-weight:600;font-size:14.5px;margin-bottom:2px}
+.tip .n.q-epic{color:#b76cff} .tip .n.q-legendary{color:#ff8a1f} .tip .n.q-rare{color:#3d8dff} .tip .n.q-common{color:#e9e6dc}
+.tip .m{color:#aab0c2;font-size:12px} .tip .g{color:#27e04a} .tip .src{color:#e3c46f;font-size:12px;margin-top:5px}
+.tip .row2{display:flex;justify-content:space-between;gap:12px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:9px;display:flex;gap:12px;align-items:center;font-size:14px;box-shadow:var(--shadow);max-width:calc(100% - 32px);z-index:10}
+.toast button{background:none;border:1px solid currentColor;color:inherit;border-radius:6px;padding:3px 9px;font:600 13px var(--sans);cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Conseil de butin · Tanks, heals, CAC, casters, distance</div>
+      <h1>Butin de <span>Raid</span></h1>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Version du jeu" id="verSeg">
+        <button data-v="all">Tout</button><button data-v="classic">Classic</button><button data-v="forever">Forever</button>
+      </div>
+      <select id="group" aria-label="Groupe de raid">
+        <option value="all">Tous les groupes</option>
+        <option value="r20">Roster 20</option><option value="r10a">Roster 10 A</option><option value="r10b">Roster 10 B</option>
+      </select>
+      <select id="period" aria-label="Période comptée">
+        <option value="30">30 derniers jours</option>
+        <option value="60">60 derniers jours</option>
+        <option value="90">90 derniers jours</option>
+        <option value="all">Depuis le début</option>
+      </select>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button data-t="overview">Tableau des loots</button>
+    <button data-t="assign">Attribuer un objet</button>
+    <button data-t="history">Historique</button>
+    <button data-t="roster">Roster</button>
+    <button data-t="catalog">Catalogue</button>
+  </nav>
+
+  <div class="status" id="status">Connexion au registre partagé…</div>
+  <main id="view"></main>
+</div>
+<div id="toastHost"></div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const CLASSES = {
+  war:{n:"Guerrier",c:"#C79C6E"}, rog:{n:"Voleur",c:"#FFF569"}, hun:{n:"Chasseur",c:"#ABD473"},
+  dru:{n:"Druide",c:"#FF7D0A"}, sha:{n:"Chaman",c:"#0070DE"}, pal:{n:"Paladin",c:"#F58CBA"},
+  mag:{n:"Mage",c:"#69CCF0"}, pri:{n:"Prêtre",c:"#FFFFFF"}, wlk:{n:"Démoniste",c:"#9482C9"}
+};
+const SPECS = {
+  war:["Armes","Fureur","Protection"],
+  rog:["Assassinat","Combat","Finesse"],
+  hun:["Maîtrise des bêtes","Précision","Survie"],
+  dru:["Farouche (chat)","Farouche (ours)","Équilibre","Restauration"],
+  sha:["Amélioration","Élémentaire","Restauration"],
+  pal:["Vindicte","Protection","Sacré"],
+  mag:["Arcanes","Feu","Givre"],
+  pri:["Discipline","Sacré","Ombre"],
+  wlk:["Affliction","Démonologie","Destruction"]
+};
+const ROLES = {tank:"Tank", heal:"Heal", melee:"CAC", caster:"Caster", ranged:"Distance"};
+const SPEC_ROLE = {"Armes":"melee","Fureur":"melee","Protection":"tank","Assassinat":"melee","Combat":"melee","Finesse":"melee",
+  "Maîtrise des bêtes":"ranged","Précision":"ranged","Survie":"ranged","Farouche (chat)":"melee","Farouche (ours)":"tank",
+  "Équilibre":"caster","Restauration":"heal","Amélioration":"melee","Élémentaire":"caster","Vindicte":"melee","Sacré":"heal",
+  "Arcanes":"caster","Feu":"caster","Givre":"caster","Discipline":"heal","Ombre":"caster","Affliction":"caster","Démonologie":"caster","Destruction":"caster"};
+const CLASS_ROLE = {war:"melee", rog:"melee", hun:"ranged", mag:"caster", wlk:"caster", pri:"heal"};
+const roleOf = p => SPEC_ROLE[p.spec] || CLASS_ROLE[p.cls] || "";
+const roleTag = p => roleOf(p) ? `<span class="role">${ROLES[roleOf(p)]}</span>` : "";
+const specOpts = (cls, cur) => { const l = [...(SPECS[cls]||[])]; if (cur && !l.includes(cur)) l.unshift(cur); return l.map(s => `<option${s===cur?" selected":""}>${esc(s)}</option>`).join(""); };
+const RANKS = ["Raider","Trial"];
+const GROUPS = {r20:"Roster 20", r10a:"Roster 10 A", r10b:"Roster 10 B"};
+const DROLES = ["Membre","Roster","Admin"];
+const KINDS = {BiS:"BiS", MS:"Spé principale", OS:"Hors-spé"};
+const VERS = {classic:"Classic", forever:"Forever"};
+const QUALS = {epic:"Épique", legendary:"Légendaire", rare:"Rare", common:"Autre"};
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const isoDay = d => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+const today = () => isoDay(new Date());
+const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem("bdr:"+k); localStorage.setItem("bdr:"+k, v); } catch(e) { return null; } };
+
+const S = {
+  db:null, user:null, uid:null, canWrite:true, names:{},
+  players:new Map(), members:new Map(), items:new Map(), loots:[], settings:{rerollsCount:false},
+  loaded:{players:false,members:false,items:false,loots:false},
+  group: pref("group") || "all",
+  version: pref("version") || "all", period: pref("period") || "60", tab: pref("tab") || "overview",
+  static:new Map(), catSrc:"", sheet:"", sheetAll:false, ovRole:"",
+  ovSort:"least", histPlayer:"", histQ:"", catVersion:"classic", catQ:"",
+  asg:{version:"classic", itemId:"", kind:"MS", date:today(), all:false, specs:new Set(), q:"", boss:"", raid:pref("raid")||"", roles:new Set(), rolesFor:""},
+  armed:null
+};
+
+/* ---------- helpers ---------- */
+const clsDot = k => `<span class="cdot" style="background:${(CLASSES[k]||{c:"#888"}).c}"></span>`;
+const clsName = k => (CLASSES[k]||{n:"—"}).n;
+const itemCls = q => "item q-" + (QUALS[q] ? q : "epic");
+const wowhead = it => it.link || ("https://www.wowhead.com/classic/search?q=" + encodeURIComponent(it.name||""));
+function periodStart(){ if (S.period === "all") return ""; const d = new Date(); d.setDate(d.getDate() - Number(S.period)); return isoDay(d); }
+function verOk(v){ return S.version === "all" || v === S.version; }
+function daysAgo(day){ if (!day) return "jamais"; const n = Math.round((new Date(today()) - new Date(day)) / 864e5); return n <= 0 ? "aujourd’hui" : n === 1 ? "hier" : `il y a ${n} j`; }
+function fmtDate(day){ if (!day) return ""; const [y,m,d] = day.split("-"); return `${d}/${m}/${y.slice(2)}`; }
+function playerName(id){ return S.players.get(id)?.name || "Joueur supprimé"; }
+function sortedPlayers(activeOnly){ return [...S.players.values()].filter(p => !activeOnly || (p.active !== false && inGroup(p))).sort((a,b)=>a.name.localeCompare(b.name,"fr")); }
+function inGroup(p){ return S.group === "all" || (p.groups||[]).includes(S.group); }
+function memberName(id){ return S.members.get(id)?.name || ""; }
+function sortedMembers(){ return [...S.members.values()].sort((a,b)=>a.name.localeCompare(b.name,"fr")); }
+/* Personnages dont les loots comptent pour la priorité de `pid` :
+   - les mains d'un même joueur partagent toujours leur compteur ;
+   - un reroll n'est compté avec les autres personnages que si l'option « les rerolls comptent » est active. */
+function linkedChars(pid){
+  const c = S.players.get(pid);
+  if (!c || !c.owner || !S.members.has(c.owner)) return [pid];
+  const sibs = [...S.players.values()].filter(x => x.owner === c.owner && x.id !== pid);
+  if (S.settings.rerollsCount) return [pid, ...sibs.map(x => x.id)];
+  if (c.alt) return [pid];
+  return [pid, ...sibs.filter(x => !x.alt).map(x => x.id)];
+}
+
+function stats(pid, version){
+  const ps = periodStart(), ids = new Set(linkedChars(pid));
+  const vOk = l => version ? l.version === version : verOk(l.version);
+  const linked = S.loots.filter(l => ids.has(l.playerId) && vOk(l));
+  const mine = linked.filter(l => l.playerId === pid);
+  const inP = linked.filter(l => !ps || l.date >= ps);
+  const main = inP.filter(l => l.kind !== "OS");
+  const ownMain = main.filter(l => l.playerId === pid).length;
+  const lastMain = linked.filter(l => l.kind !== "OS").reduce((m,l) => l.date > m ? l.date : m, "");
+  const recent = [...mine].sort((a,b) => (b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+  return {main:main.length, ownMain, otherMain:main.length - ownMain, bis:main.filter(l=>l.kind==="BiS").length,
+    os:inP.filter(l => l.kind === "OS" && l.playerId === pid).length, total:mine.length, lastMain, recent};
+}
+const mainCell = s => `<span title="${s.otherMain ? `${s.ownMain} sur ce personnage, ${s.otherMain} sur ses autres personnages` : "Tous sur ce personnage"}">${s.main}${s.otherMain ? `<span class="muted small"> (${s.ownMain}+${s.otherMain})</span>` : ""}</span>`;
+const charTag = p => `${p.alt ? '<span class="chip os">Reroll</span>' : ""}${p.owner && memberName(p.owner) ? `<span class="small muted">${esc(memberName(p.owner))}</span>` : ""}`;
+
+function toast(msg, undo){
+  const host = document.getElementById("toastHost");
+  host.innerHTML = "";
+  const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status");
+  const s = document.createElement("span"); s.textContent = msg; t.append(s);
+  if (undo){ const b = document.createElement("button"); b.textContent = "Annuler"; b.onclick = () => { host.innerHTML = ""; undo(); }; t.append(b); }
+  host.append(t);
+  clearTimeout(toast._t); toast._t = setTimeout(() => { if (host.contains(t)) host.innerHTML = ""; }, undo ? 7000 : 4000);
+}
+function writeErr(e){
+  const code = e && e.code;
+  if (code === "invalid_argument"){ S.canWrite = false; document.body.classList.add("ro"); toast("Tu as un accès en lecture seule : demande à passer Contributeur pour modifier le registre."); }
+  else if (code === "quota_exceeded") toast("Le registre est plein. Supprime d’anciens loots pour en ajouter.");
+  else toast("L’enregistrement a échoué. Réessaie dans un instant.");
+}
+async function write(fn){ if (!S.db) { toast("Le registre partagé n’est pas disponible dans cette vue."); return false; } try { await fn(S.db); return true; } catch(e){ writeErr(e); return false; } }
+
+/* inline two-step confirmation (the viewer has no confirm dialog) */
+function armed(key){ return S.armed === key; }
+function arm(key){ S.armed = key; render(); clearTimeout(arm._t); arm._t = setTimeout(() => { if (S.armed === key){ S.armed = null; render(); } }, 3500); }
+
+/* ---------- views ---------- */
+/* Emplacements, pour la synthèse « qui a eu quoi ». */
+const SLOTS = [["head","Tête"],["neck","Cou"],["shoulder","Épaules"],["back","Dos"],["chest","Torse"],["wrist","Poignets"],["hands","Mains"],["waist","Taille"],["legs","Jambes"],["feet","Pieds"],["finger","Anneaux"],["trinket","Bijoux"],["weapon","Armes"],["ranged","Distance"],["token","Set / jetons"],["other","Autre"]];
+const SLOT_RX = [["token",/jeton|pièce de set|set \(|^t[123]/],["weapon",/une main|deux mains|main droite|main gauche|dague|épée|hache|masse|pugilat|bâton|hast|bouclier|\b[12]m\b/],
+  ["ranged",/distance|arc\b|arme à feu|arbalète|relique|\bjet\b|idole|totem|libram/],["head",/tête|casque|heaume/],["neck",/\bcou\b|collier|amulette/],["shoulder",/épaule|spalière/],
+  ["back",/\bdos\b|cape|manteau/],["chest",/torse|plastron|robe/],["wrist",/poignet|brassard|bracelet/],["hands",/mains|gant|gantelet/],["waist",/taille|ceinture|ceinturon/],
+  ["legs",/jambe|jambière|pantalon/],["feet",/pieds|botte|chaussure|soleret/],["finger",/anneau|bague/],["trinket",/bijou|talisman|insigne/]];
+function slotOf(l){
+  const it = getItem(l.itemId), txt = (it?.slot || "").toLowerCase();
+  for (const [k, rx] of SLOT_RX) if (rx.test(txt)) return k;
+  const nm = (l.itemName || "").toLowerCase();
+  for (const [k, rx] of SLOT_RX) if (rx.test(nm)) return k;
+  return "other";
+}
+function lootsOf(ids){
+  const ps = periodStart();
+  return S.loots.filter(l => ids.includes(l.playerId) && verOk(l.version) && (!ps || l.date >= ps))
+    .sort((a,b) => (b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+}
+const itemSpan = l => `<span class="${itemCls(getItem(l.itemId)?.quality)}" data-item="${esc(l.itemId||"")}" data-name="${esc(l.itemName)}">${esc(l.itemName)}</span>`;
+const kindChip = k => `<span class="chip ${k==="BiS"?"bis":k==="OS"?"os":""}">${esc(KINDS[k]||k)}</span>`;
+const periodLabel = () => S.period === "all" ? "depuis le début" : `sur les ${S.period} derniers jours`;
+
+function vSheet(){
+  const p = S.players.get(S.sheet);
+  if (!p) { S.sheet = ""; return ""; }
+  const sibs = p.owner ? [...S.players.values()].filter(x => x.owner === p.owner && x.id !== p.id) : [];
+  const ids = S.sheetAll ? [p.id, ...sibs.map(x => x.id)] : [p.id];
+  const list = lootsOf(ids);
+  const main = list.filter(l => l.kind !== "OS");
+  const allTime = S.loots.filter(l => ids.includes(l.playerId) && verOk(l.version));
+  const by = {}; list.forEach(l => (by[slotOf(l)] ||= []).push(l));
+  const multi = ids.length > 1;
+  return `<div class="panel" style="margin-bottom:18px">
+    <div class="panel-h">
+      <div>
+        <h2 style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${clsDot(p.cls)}${esc(p.name)} ${charTag(p)}</h2>
+        <p class="sub">${esc(clsName(p.cls))}${p.spec ? " · " + esc(p.spec) : ""} · ${esc(p.rank||"Raider")}${(p.groups||[]).length ? " · " + p.groups.map(g => GROUPS[g]).join(", ") : ""} · ${periodLabel()}${S.version!=="all" ? " · " + VERS[S.version] : ""}</p>
+      </div>
+      <div class="row" style="align-items:center">
+        ${sibs.length ? `<label class="small" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="sheetAll"${S.sheetAll?" checked":""}> Inclure ses ${sibs.length} autre${sibs.length>1?"s":""} personnage${sibs.length>1?"s":""}</label>` : ""}
+        <button class="btn" data-hist="${esc(p.id)}">Historique</button>
+        <button class="btn" data-sheet="">Fermer</button>
+      </div>
+    </div>
+    <div class="panel-b stack">
+      <div class="kpis">
+        <div class="kpi"><b>${list.length}</b><span>Loots</span></div>
+        <div class="kpi"><b>${main.length}</b><span>Principaux</span></div>
+        <div class="kpi"><b>${main.filter(l=>l.kind==="BiS").length}</b><span>dont BiS</span></div>
+        <div class="kpi"><b>${list.length - main.length}</b><span>Hors-spé</span></div>
+        <div class="kpi"><b style="font-size:16px;padding-top:5px">${daysAgo(main[0]?.date)}</b><span>Dernier principal</span></div>
+        <div class="kpi"><b>${allTime.length}</b><span>Depuis le début</span></div>
+      </div>
+      <div class="slotgrid">${SLOTS.filter(([k]) => k !== "other" || by.other).map(([k,n]) => { const ls = by[k] || []; return `<div class="slot${ls.length?"":" empty"}">
+        <h3><span>${n}</span><span>${ls.length || "—"}</span></h3>
+        ${ls.map(l => `<div class="li"><span>${itemSpan(l)}${l.kind==="OS" ? ' <span class="small muted">HS</span>' : l.kind==="BiS" ? ' <span class="small" style="color:var(--accent)">BiS</span>' : ""}${multi ? ` <span class="small muted">· ${esc(playerName(l.playerId))}</span>` : ""}</span><span class="d">${fmtDate(l.date)}</span></div>`).join("")}
+      </div>`; }).join("")}</div>
+      ${list.length ? "" : `<p class="sub">Aucun loot ${periodLabel()}. Change la période en haut pour voir plus loin.</p>`}
+    </div>
+  </div>`;
+}
+
+function vOverview(){
+  const players = sortedPlayers(true).filter(p => !S.ovRole || roleOf(p) === S.ovRole);
+  if (!sortedPlayers(true).length) return emptyRoster();
+  const rows = players.map(p => { const list = lootsOf([p.id]); const by = {}; list.forEach(l => (by[slotOf(l)] ||= []).push(l)); return {p, s:stats(p.id), by, n:list.length}; });
+  if (S.ovSort === "least") rows.sort((a,b) => a.s.main - b.s.main || (a.s.lastMain||"").localeCompare(b.s.lastMain||"") || a.p.name.localeCompare(b.p.name,"fr"));
+  else if (S.ovSort === "most") rows.sort((a,b) => b.s.main - a.s.main || a.p.name.localeCompare(b.p.name,"fr"));
+  else rows.sort((a,b) => a.p.name.localeCompare(b.p.name,"fr"));
+  const ps = periodStart();
+  const given = S.loots.filter(l => verOk(l.version) && (!ps || l.date >= ps));
+  const never = rows.filter(r => !r.s.lastMain).length;
+  const cols = SLOTS.filter(([k]) => k !== "other" || rows.some(r => r.by.other));
+  return `${S.sheet ? vSheet() : ""}
+  <div class="panel">
+    <div class="panel-h">
+      <div class="summary">
+        <span><b>${players.length}</b> personnages actifs${S.group!=="all" ? ` · ${GROUPS[S.group]}` : ""}</span>
+        <span><b>${given.length}</b> objets distribués ${periodLabel()}</span>
+        <span><b>${never}</b> sans aucun loot principal</span>
+      </div>
+      <div class="chips" role="group" aria-label="Filtrer par rôle">${Object.entries(ROLES).map(([k,n]) => `<button class="chipbtn" data-ovrole="${k}" aria-pressed="${S.ovRole===k}">${n}</button>`).join("")}</div>
+      <select id="ovSort" aria-label="Tri">
+        <option value="least"${S.ovSort==="least"?" selected":""}>Les moins servis d’abord</option>
+        <option value="most"${S.ovSort==="most"?" selected":""}>Les plus servis d’abord</option>
+        <option value="name"${S.ovSort==="name"?" selected":""}>Par nom</option>
+      </select>
+    </div>
+    <div class="tablewrap"><table class="matrix">
+      <thead><tr><th>Personnage</th><th class="num" title="Loots principaux, autres personnages compris selon la règle de comptage">Princ.</th><th class="num">HS</th><th>Dernier</th>${cols.map(([k,n]) => `<th class="sl">${n.replace(" / jetons","")}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(({p,s,by}) => `
+        <tr${p.id===S.sheet?' class="sel"':""}>
+          <td><button class="pbtn" data-sheet="${esc(p.id)}" title="Voir la fiche"><span class="pname">${clsDot(p.cls)}<span class="pn">${esc(p.name)}</span></span></button>
+            <div class="small muted">${roleOf(p) ? ROLES[roleOf(p)] + " · " : ""}${esc(p.spec||clsName(p.cls))}${p.alt ? " · reroll" : ""}${p.owner && memberName(p.owner) ? " · " + esc(memberName(p.owner)) : ""}</div></td>
+          <td class="num">${mainCell(s)}</td>
+          <td class="num muted">${s.os}</td>
+          <td class="small" style="white-space:nowrap" title="${esc(fmtDate(s.lastMain))}">${daysAgo(s.lastMain)}</td>
+          ${cols.map(([k]) => { const ls = by[k] || []; return ls.length ? `<td class="sl"><span data-items="${esc(ls.map(l => l.itemId + "|" + l.itemName + "|" + l.date + "|" + l.kind).join("~"))}">${ls.length}</span></td>` : '<td class="sl zero">·</td>'; }).join("")}
+        </tr>`).join("")}
+      </tbody>
+    </table></div>
+  </div>
+  <p class="rule" style="margin-top:14px">Clique sur un personnage pour ouvrir sa fiche (objets par emplacement). Survole un chiffre pour voir les objets. Les colonnes d’emplacement comptent les loots ${periodLabel()} ; « Princ. » compte les loots BiS et spé principale en incluant les autres personnages du joueur selon la règle de comptage (détail entre parenthèses).</p>`;
+}
+
+function emptyRoster(){
+  return `<div class="panel"><div class="empty">
+    <h2 style="margin-bottom:6px">Le roster est vide</h2>
+    <p class="sub">Ajoute les joueurs CAC du raid dans l’onglet Roster. Les compteurs de loots apparaîtront ici.</p>
+    <p style="margin-top:14px"><button class="btn primary w" data-go="roster">Ajouter des joueurs</button></p>
+  </div></div>`;
+}
+
+/* Catalogue Classic importé (data/items-classic.json) + objets ajoutés à la main (base partagée, dont Forever). */
+const RAID_ORDER = ["Molten Core","Onyxia","Zul'Gurub","Blackwing Lair","Ruines d'Ahn'Qiraj","Temple d'Ahn'Qiraj","Naxxramas"];
+function fromStatic(x){
+  return { id:"c:" + x.id, name:x.name, version:"classic", raid:x.src.zone, boss:x.src.boss, srcType:x.src.t,
+    slot:[x.slot, x.type].filter(Boolean).join(" · "), quality:x.quality, classes:x.classes, restricted:x.restricted,
+    ilvl:x.ilvl, drop:x.src.drop, stats:x.stats || [], roles:x.roles || [], link:"https://www.wowhead.com/classic/item=" + x.id, static:true };
+}
+function getItem(id){ return S.items.get(id) || S.static.get(id); }
+function itemsFor(version){ return [...S.items.values(), ...(version === "classic" ? S.static.values() : [])].filter(i => i.version === version); }
+function srcRank(zone){
+  const i = RAID_ORDER.indexOf(zone);
+  if (i >= 0) return i;
+  if (zone === "Artisanat") return 30;
+  if (zone === "Quête") return 40;
+  return [...S.static.values()].some(x => x.raid === zone && x.srcType === "dungeon") ? 20 : 10;
+}
+function raidsFor(version){ return [...new Set(itemsFor(version).map(i => i.raid||"Autre"))].sort((a,b) => srcRank(a) - srcRank(b) || a.localeCompare(b,"fr")); }
+const knownCls = it => (it.classes||[]).filter(c => CLASSES[c]);
+
+function vAssign(){
+  const a = S.asg;
+  const raids = raidsFor(a.version);
+  if (a.raid && !raids.includes(a.raid)) { a.raid = ""; a.boss = ""; }
+  const aq = a.q.trim().toLowerCase();
+  const inSrc = itemsFor(a.version).filter(i => !a.raid || (i.raid||"Autre") === a.raid);
+  const bosses = a.raid ? [...new Set(inSrc.map(i => i.boss || "—"))].sort((x,y) => x.localeCompare(y,"fr")) : [];
+  if (a.boss && !bosses.includes(a.boss)) a.boss = "";
+  const pool = (aq || a.boss) ? inSrc.filter(i => (!a.boss || (i.boss||"—") === a.boss) && (!aq || i.name.toLowerCase().includes(aq) || (i.boss||"").toLowerCase().includes(aq)))
+    .sort((x,y)=> srcRank(x.raid) - srcRank(y.raid) || (x.boss||"").localeCompare(y.boss||"","fr") || x.name.localeCompare(y.name,"fr")) : [];
+  const shown = pool.slice(0, 60);
+  S.asgFirst = shown[0]?.id || "";
+  const it = a.itemId ? getItem(a.itemId) : null;
+  if (it && a.rolesFor !== it.id){ a.roles = new Set(it.roles?.length ? it.roles : Object.keys(ROLES)); a.rolesFor = it.id; }
+
+  let cand = "";
+  if (!sortedPlayers(true).length) cand = emptyRoster();
+  else if (!it) cand = `<div class="panel"><div class="empty"><h2 style="margin-bottom:6px">Choisis un objet</h2><p class="sub">Tape son nom, ou choisis le raid puis le boss. Les personnages qui peuvent le porter s’affichent ici, du moins servi au plus servi.</p></div></div>`;
+  else {
+    const active = sortedPlayers(true);
+    const classFit = p => !(it.classes||[]).length || it.classes.includes(p.cls);
+    const roleFit = p => !roleOf(p) || !(it.roles||[]).length || it.roles.includes(roleOf(p));
+    const byClass = active.filter(p => a.all || classFit(p));
+    const roleCount = k => byClass.filter(p => roleOf(p) === k).length;
+    const eligible = byClass.filter(p => !roleOf(p) || a.roles.has(roleOf(p)));
+    const rows = eligible.map(p => {
+      const s = stats(p.id, a.version);
+      const fit = classFit(p) && roleFit(p);
+      const has = S.loots.some(l => l.playerId === p.id && (l.itemId === it.id || l.itemName === it.name) && !String(it.name).startsWith("Pièce de set") && it.slot !== "Jeton");
+      return {p, s, has, fit};
+    }).sort((x,y) => (y.fit - x.fit) || (x.has - y.has) || (x.s.main - y.s.main) || (x.s.lastMain||"").localeCompare(y.s.lastMain||"") || RANKS.indexOf(x.p.rank||"Raider") - RANKS.indexOf(y.p.rank||"Raider") || x.p.name.localeCompare(y.p.name,"fr"));
+    const hidden = active.length - eligible.length;
+    /* Suggestion : les meilleurs ex æquo parmi ceux dont la classe et le rôle conviennent et qui n'ont pas l'objet. */
+    const top = rows.find(r => r.fit && !r.has);
+    const isTop = r => top && r.fit && !r.has && r.s.main === top.s.main && (r.s.lastMain||"") === (top.s.lastMain||"");
+    const nTop = rows.filter(isTop).length;
+    cand = `<div class="panel">
+      <div class="panel-h">
+        <div><h2>Qui reçoit <span class="${itemCls(it.quality)}" style="font-family:var(--sans)" data-item="${esc(it.id)}">${esc(it.name)}</span> ?</h2>
+        <p class="sub">${esc(it.slot||"")}${(it.roles||[]).length ? " · pour " + it.roles.map(k => ROLES[k]).join(", ") : ""} · ${rows.length} candidat${rows.length>1?"s":""}${hidden ? `, ${hidden} masqué${hidden>1?"s":""}` : ""}</p></div>
+        <div class="seg" role="group" aria-label="Type de loot" id="asgKindSeg">${Object.entries(KINDS).map(([k,n]) => `<button data-kind="${k}" aria-pressed="${a.kind===k}">${n}</button>`).join("")}</div>
+      </div>
+      <div class="panel-b" style="padding-block:10px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between">
+        <div class="chips" role="group" aria-label="Rôles affichés">${Object.entries(ROLES).map(([k,n]) => `<button class="chipbtn" data-role="${k}" aria-pressed="${a.roles.has(k)}">${n}<span class="ct">${roleCount(k)}</span></button>`).join("")}</div>
+        <label class="small" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="asgAll"${a.all?" checked":""}> Toutes les classes</label>
+      </div>
+      ${rows.length ? `<div class="tablewrap"><table>
+        <thead><tr><th>Personnage</th><th class="num">Principaux</th><th>Dernier</th><th></th><th class="w"></th></tr></thead>
+        <tbody>${rows.map(r => `<tr>
+          <td><div style="display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center"><span class="pname">${clsDot(r.p.cls)}${esc(r.p.name)}</span>${roleTag(r.p)}<span class="small muted">${esc(r.p.spec||clsName(r.p.cls))}</span>${charTag(r.p)}${r.p.rank==="Trial" ? '<span class="chip">Trial</span>' : ""}</div></td>
+          <td class="num">${mainCell(r.s)}</td>
+          <td class="small" style="white-space:nowrap">${daysAgo(r.s.lastMain)}</td>
+          <td>${!r.fit ? '<span class="chip os">Hors profil</span>' : r.has ? '<span class="chip have">Déjà obtenu</span>' : isTop(r) ? `<span class="chip sugg">${nTop > 1 ? "Ex æquo" : "Suggestion"}</span>` : ""}</td>
+          <td class="w" style="text-align:right"><button class="btn${isTop(r) ? " primary" : ""}" data-give="${esc(r.p.id)}">Donner</button></td>
+        </tr>`).join("")}</tbody></table></div>` : `<div class="empty">Personne ne correspond. Active d’autres rôles ou coche « Toutes les classes ».</div>`}
+    </div>
+    ${nTop > 1 ? `<p class="rule" style="margin-top:14px">${nTop} personnages sont à égalité (même nombre de loots, même dernier loot) : au conseil de trancher.</p>` : ""}
+    <p class="rule" style="margin-top:14px">Rôles cochés d’office : ceux à qui l’objet sert d’après ses caractéristiques. Ordre : classe et rôle qui conviennent, pas déjà l’objet, moins de loots principaux sur la période (règle des rerolls comprise), dernier loot le plus ancien, Raider avant Trial. La décision reste au conseil.</p>`;
+  }
+
+  return `<div class="grid-assign">
+    <div class="panel"><div class="panel-b stack">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <span class="step">Objet</span>
+        <div class="seg" role="group" aria-label="Version" id="asgVer">${Object.entries(VERS).map(([k,n]) => `<button data-v="${k}" aria-pressed="${a.version===k}">${n}</button>`).join("")}</div>
+      </div>
+      <input type="text" class="search" id="asgQ" placeholder="Tape un objet ou un boss…" value="${esc(a.q)}" aria-label="Chercher un objet" autocomplete="off">
+      <select id="asgRaid" aria-label="Raid ou source"><option value="">Tous les raids et donjons</option>${raids.map(r => `<option${r===a.raid?" selected":""}>${esc(r)}</option>`).join("")}</select>
+      ${bosses.length ? `<div class="chips" role="group" aria-label="Boss">${bosses.map(b => `<button class="chipbtn" data-boss="${esc(b)}" aria-pressed="${a.boss===b}">${esc(b)}</button>`).join("")}</div>` : ""}
+      ${shown.length ? `<div class="results" role="listbox" aria-label="Objets">${shown.map(i => `<button class="itemrow" role="option" data-pick="${esc(i.id)}" aria-selected="${i.id===a.itemId}">
+          <span class="${itemCls(i.quality)}" data-item="${esc(i.id)}">${esc(i.name)}</span>
+          <span class="s">${esc(i.slot||"")}${!a.boss && i.boss ? " · " + esc(i.boss) : ""}${(i.roles||[]).length ? " · " + i.roles.map(k => ROLES[k]).join("/") : ""}</span></button>`).join("")}</div>
+        ${pool.length > shown.length ? `<p class="sub">${pool.length} objets : précise la recherche.</p>` : ""}`
+        : (aq || a.boss) ? `<p class="sub">Aucun objet ne correspond.</p>` : `<p class="sub">${a.raid ? "Choisis un boss, ou tape un nom." : "Astuce : tape 3 lettres puis Entrée pour prendre le premier résultat."}</p>`}
+      ${!itemsFor(a.version).length && a.version === "forever" ? `<p class="sub">Le catalogue Forever se remplit au fil des annonces. Ajoute les objets dans l’onglet Catalogue.</p>` : ""}
+      <label class="f w">Date du raid<input type="date" id="asgDate" value="${esc(a.date)}"></label>
+    </div></div>
+    <div>${cand}</div>
+  </div>`;
+}
+
+function vHistory(){
+  const q = S.histQ.trim().toLowerCase();
+  const list = S.loots.filter(l => verOk(l.version) && (!S.histPlayer || l.playerId === S.histPlayer) &&
+    (!q || (l.itemName||"").toLowerCase().includes(q) || playerName(l.playerId).toLowerCase().includes(q) || (l.boss||"").toLowerCase().includes(q)))
+    .sort((a,b) => (b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+  return `<div class="panel">
+    <div class="panel-h">
+      <div class="row">
+        <label class="f">Joueur<select id="histPlayer"><option value="">Tous</option>${sortedPlayers(false).map(p => `<option value="${esc(p.id)}"${p.id===S.histPlayer?" selected":""}>${esc(p.name)}</option>`).join("")}</select></label>
+        <label class="f">Rechercher<input type="text" id="histQ" placeholder="Objet, joueur, boss" value="${esc(S.histQ)}"></label>
+      </div>
+      <p class="sub">${list.length} loot${list.length>1?"s":""} · ${S.version==="all" ? "toutes versions" : VERS[S.version]}</p>
+    </div>
+    ${list.length ? `<div class="tablewrap"><table>
+      <thead><tr><th>Date</th><th>Joueur</th><th>Objet</th><th>Raid · boss</th><th>Type</th><th>Version</th><th>Noté par</th><th class="w"></th></tr></thead>
+      <tbody>${list.slice(0,400).map(l => { const p = S.players.get(l.playerId); const it = getItem(l.itemId); return `<tr>
+        <td class="num" style="text-align:left">${fmtDate(l.date)}</td>
+        <td><span class="pname">${clsDot(p?.cls)}${esc(playerName(l.playerId))}</span></td>
+        <td>${itemSpan(l)}</td>
+        <td class="small muted">${esc([l.raid,l.boss,GROUPS[l.group]].filter(Boolean).join(" · "))}</td>
+        <td><span class="chip ${l.kind==="BiS"?"bis":l.kind==="OS"?"os":""}">${esc(KINDS[l.kind]||l.kind)}</span></td>
+        <td><span class="chip ver">${esc(VERS[l.version]||l.version)}</span></td>
+        <td class="small muted">${esc(S.names[l.by] || "")}</td>
+        <td class="w" style="text-align:right"><button class="btn ${armed("l:"+l.id)?"danger":"ghost"}" data-del-loot="${esc(l.id)}">${armed("l:"+l.id)?"Confirmer":"Supprimer"}</button></td>
+      </tr>`; }).join("")}</tbody></table></div>` : `<div class="empty">Aucun loot enregistré pour ces filtres. Les attributions faites dans « Attribuer un objet » apparaissent ici.</div>`}
+  </div>`;
+}
+
+function vRoster(){
+  const players = [...S.players.values()].sort((a,b) => (memberName(a.owner)||"~").localeCompare(memberName(b.owner)||"~","fr") || (a.alt?1:0)-(b.alt?1:0) || a.name.localeCompare(b.name,"fr"));
+  const members = sortedMembers();
+  const dis = S.canWrite ? "" : "disabled";
+  const memberOpts = cur => `<option value="">— Aucun joueur —</option>${members.map(m => `<option value="${esc(m.id)}"${m.id===cur?" selected":""}>${esc(m.name)}</option>`).join("")}`;
+  return `<div class="stack">
+    <div class="panel"><div class="panel-b stack">
+      <h2>Règle de comptage</h2>
+      <label style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="rerollsCount" ${S.settings.rerollsCount?"checked":""} ${dis} style="margin-top:4px">
+        <span><b>Les loots des rerolls comptent pour le joueur</b><br><span class="small muted">Activé : tout ce que gagnent les personnages d’un même joueur s’additionne, il passe donc après les autres. Désactivé : les mains d’un joueur partagent leur compteur, mais chaque reroll est compté à part. Un reroll qui devient un main : passe-le en « Main » dans le tableau des personnages.</span></span></label>
+    </div></div>
+
+    <div class="panel">
+      <div class="panel-h"><div><h2>Joueurs</h2><p class="sub">Une ligne par personne du Discord. Ses personnages (main et rerolls) s’y rattachent.</p></div></div>
+      <div class="panel-b w" style="border-bottom:1px solid var(--line)">
+        <form id="addMember" class="row" autocomplete="off">
+          <label class="f">Pseudo Discord<input type="text" id="nmName" required maxlength="40" placeholder="Ex. thrall#0001"></label>
+          <label class="f">Rôle Discord<select id="nmRole">${DROLES.map(r => `<option>${r}</option>`).join("")}</select></label>
+          <button class="btn primary" type="submit">Ajouter le joueur</button>
+        </form>
+      </div>
+      ${members.length ? `<div class="tablewrap"><table>
+        <thead><tr><th>Joueur</th><th>Rôle Discord</th><th>Personnages</th><th class="w"></th></tr></thead>
+        <tbody>${members.map(m => { const chars = players.filter(p => p.owner === m.id); return `<tr>
+          <td><b>${esc(m.name)}</b>${m.discord && m.discord !== m.name ? ` <span class="small muted">@${esc(m.discord)}</span>` : ""}</td>
+          <td><select data-drole="${esc(m.id)}" aria-label="Rôle de ${esc(m.name)}" ${dis}>${DROLES.map(r => `<option${r===(m.role||"Membre")?" selected":""}>${r}</option>`).join("")}</select></td>
+          <td><div class="items-cell">${chars.map(p => `<span class="chip">${clsDot(p.cls)}${esc(p.name)}${p.alt?' <span class="muted">reroll</span>':""}</span>`).join("") || '<span class="small muted">Aucun personnage</span>'}</div></td>
+          <td class="w" style="text-align:right"><button class="btn ${armed("m:"+m.id)?"danger":"ghost"}" data-del-member="${esc(m.id)}">${armed("m:"+m.id)?"Confirmer":"Supprimer"}</button></td>
+        </tr>`; }).join("")}</tbody></table></div>` : `<div class="empty">Aucun joueur. Ajoute-les ici, ou importe-les depuis Discord.</div>`}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><div><h2>Personnages</h2><p class="sub">Classe, spé, main ou reroll, et groupes de raid (un personnage peut être dans plusieurs).</p></div></div>
+      <div class="panel-b w" style="border-bottom:1px solid var(--line)">
+        <form id="addPlayer" class="stack" autocomplete="off">
+          <div class="row">
+            <label class="f">Nom du personnage<input type="text" id="npName" required maxlength="40" placeholder="Ex. Grommash"></label>
+            <label class="f">Joueur<select id="npOwner">${memberOpts("")}</select></label>
+            <label class="f">Classe<select id="npCls">${Object.entries(CLASSES).map(([k,c]) => `<option value="${k}">${c.n}</option>`).join("")}</select></label>
+            <label class="f">Spé<select id="npSpec">${specOpts("war")}</select></label>
+            <label class="f">Type<select id="npAlt"><option value="">Main</option><option value="1">Reroll</option></select></label>
+            <label class="f">Rang<select id="npRank">${RANKS.map(r => `<option>${r}</option>`).join("")}</select></label>
+          </div>
+          <div class="row" style="justify-content:space-between">
+            <div class="checks" role="group" aria-label="Groupes">${Object.entries(GROUPS).map(([k,n]) => `<label><input type="checkbox" name="npGrp" value="${k}"${S.group===k?" checked":""}>${n}</label>`).join("")}</div>
+            <button class="btn primary" type="submit">Ajouter le personnage</button>
+          </div>
+        </form>
+      </div>
+      ${players.length ? `<div class="tablewrap"><table>
+        <thead><tr><th>Personnage</th><th>Joueur</th><th>Classe</th><th>Spé</th><th>Type</th><th>Groupes</th><th>Rang</th><th>Actif</th><th class="num">Loots</th><th class="w"></th></tr></thead>
+        <tbody>${players.map(p => `<tr${p.active===false?' style="opacity:.55"':""}>
+          <td><span class="pname">${clsDot(p.cls)}${esc(p.name)}</span></td>
+          <td><select data-owner="${esc(p.id)}" aria-label="Joueur de ${esc(p.name)}" ${dis}>${memberOpts(p.owner||"")}</select></td>
+          <td class="small">${esc(clsName(p.cls))}</td>
+          <td><select data-spec="${esc(p.id)}" aria-label="Spé de ${esc(p.name)}" ${dis}>${p.spec ? "" : '<option value="" selected>—</option>'}${specOpts(p.cls, p.spec)}</select></td>
+          <td><select data-alt="${esc(p.id)}" aria-label="Main ou reroll" ${dis}><option value=""${p.alt?"":" selected"}>Main</option><option value="1"${p.alt?" selected":""}>Reroll</option></select></td>
+          <td><div class="checks" style="flex-wrap:nowrap">${Object.entries(GROUPS).map(([k,n]) => `<label title="${n}"><input type="checkbox" data-grp="${esc(p.id)}" value="${k}"${(p.groups||[]).includes(k)?" checked":""} ${dis}>${n.replace("Roster ","")}</label>`).join("")}</div></td>
+          <td><select data-rank="${esc(p.id)}" aria-label="Rang de ${esc(p.name)}" ${dis}>${[...new Set([...RANKS, p.rank||"Raider"])].map(r => `<option${r===(p.rank||"Raider")?" selected":""}>${esc(r)}</option>`).join("")}</select></td>
+          <td><input type="checkbox" data-active="${esc(p.id)}" aria-label="${esc(p.name)} actif" ${p.active!==false?"checked":""} ${dis}></td>
+          <td class="num">${S.loots.filter(l=>l.playerId===p.id).length}</td>
+          <td class="w" style="text-align:right"><button class="btn ${armed("p:"+p.id)?"danger":"ghost"}" data-del-player="${esc(p.id)}">${armed("p:"+p.id)?"Confirmer":"Supprimer"}</button></td>
+        </tr>`).join("")}</tbody></table></div>
+        <div class="panel-b"><p class="rule">Décoche « Actif » pour un personnage absent ou parti : il disparaît des listes d’attribution mais son historique reste.</p></div>` : `<div class="empty">Aucun personnage pour l’instant.</div>`}
+    </div>
+  </div>`;
+}
+
+function vCatalog(){
+  const v = S.catVersion, q = S.catQ.trim().toLowerCase();
+  const srcs = raidsFor(v);
+  if (S.catSrc && !srcs.includes(S.catSrc)) S.catSrc = "";
+  const all = itemsFor(v).filter(i => (!S.catSrc || (i.raid||"Autre") === S.catSrc) && (!q || i.name.toLowerCase().includes(q) || (i.boss||"").toLowerCase().includes(q) || (i.slot||"").toLowerCase().includes(q)));
+  const list = all.sort((a,b) => srcRank(a.raid) - srcRank(b.raid) || (a.raid||"").localeCompare(b.raid||"","fr")).slice(0, 300);
+  const byRaid = {};
+  list.forEach(i => (byRaid[i.raid||"Autre"] ||= []).push(i));
+  const order = Object.keys(byRaid).sort((a,b) => srcRank(a) - srcRank(b) || a.localeCompare(b,"fr"));
+  return `<div class="stack">
+    <div class="panel"><div class="panel-h">
+      <div class="row">
+        <div class="seg" role="group" aria-label="Version du catalogue" id="catVer">${Object.entries(VERS).map(([k,n]) => `<button data-v="${k}" aria-pressed="${v===k}">${n}</button>`).join("")}</div>
+        <label class="f">Source<select id="catSrc"><option value="">Toutes les sources</option>${srcs.map(r => `<option${r===S.catSrc?" selected":""}>${esc(r)}</option>`).join("")}</select></label>
+        <label class="f" style="min-width:200px">Rechercher<input type="text" id="catQ" placeholder="Nom, boss, emplacement" value="${esc(S.catQ)}"></label>
+      </div>
+      <p class="sub">${all.length} objet${all.length>1?"s":""}${all.length > list.length ? ` · 300 premiers affichés, affine la recherche` : ""} · ${itemsFor(v).length} en ${VERS[v]}</p>
+    </div>
+    <div class="panel-b w">
+      <form id="addItem" class="stack" autocomplete="off">
+        <div class="row">
+          <label class="f" style="flex:2 1 220px">Nouvel objet<input type="text" id="niName" required maxlength="80" placeholder="Nom exact de l’objet"></label>
+          <label class="f">Version<select id="niVer">${Object.entries(VERS).map(([k,n]) => `<option value="${k}"${k===v?" selected":""}>${n}</option>`).join("")}</select></label>
+          <label class="f">Raid<input type="text" id="niRaid" maxlength="40" list="raidList" placeholder="Ex. Molten Core"></label>
+          <label class="f">Boss<input type="text" id="niBoss" maxlength="40"></label>
+          <label class="f">Emplacement<input type="text" id="niSlot" maxlength="30" placeholder="Épée 1M, Anneau…"></label>
+          <label class="f">Qualité<select id="niQual">${Object.entries(QUALS).map(([k,n]) => `<option value="${k}">${n}</option>`).join("")}</select></label>
+        </div>
+        <div class="row" style="justify-content:space-between">
+          <div class="checks" role="group" aria-label="Rôles">${Object.entries(ROLES).map(([k,n]) => `<label><input type="checkbox" name="niRole" value="${k}">${n}</label>`).join("")}</div>
+          <div class="checks" role="group" aria-label="Classes intéressées">${Object.entries(CLASSES).map(([k,c]) => `<label><input type="checkbox" name="niCls" value="${k}">${clsDot(k)}${c.n}</label>`).join("")}</div>
+          <button class="btn primary" type="submit">Ajouter au catalogue</button>
+        </div>
+        <datalist id="raidList">${[...new Set(itemsFor(v).map(i=>i.raid).filter(Boolean))].map(r => `<option value="${esc(r)}">`).join("")}</datalist>
+      </form>
+    </div></div>
+    <div class="panel">
+      ${order.length ? `<div class="tablewrap"><table>
+        <thead><tr><th>Objet</th><th>Boss</th><th>Emplacement</th><th>Classes</th><th class="num">Distribués</th><th class="w"></th></tr></thead>
+        ${order.map(r => `<tbody><tr><td colspan="6" class="raidh">${esc(r)}</td></tr>${byRaid[r].sort((a,b)=>(a.boss||"").localeCompare(b.boss||"","fr")||a.name.localeCompare(b.name,"fr")).map(i => `<tr>
+          <td><a class="${itemCls(i.quality)}" href="${esc(wowhead(i))}" target="_blank" rel="noopener" style="text-decoration:none" data-item="${esc(i.id)}">${esc(i.name)}</a></td>
+          <td class="small muted">${esc(i.boss||"")}</td>
+          <td class="small">${esc(i.slot||"")}</td>
+          <td>${(i.classes||[]).length >= 9 || !(i.classes||[]).length ? '<span class="small muted">Toutes</span>' : knownCls(i).map(c => `<span title="${esc(clsName(c))}" style="display:inline-block;margin-right:3px">${clsDot(c)}</span>`).join("") || '<span class="small muted">Lanceurs de sorts</span>'}</td>
+          <td class="num">${S.loots.filter(l=>l.itemId===i.id).length}</td>
+          <td class="w" style="text-align:right">${i.static ? "" : `<button class="btn ${armed("i:"+i.id)?"danger":"ghost"}" data-del-item="${esc(i.id)}">${armed("i:"+i.id)?"Confirmer":"Retirer"}</button>`}</td>
+        </tr>`).join("")}</tbody>`).join("")}
+      </table></div>` : `<div class="empty">${v==="forever" ? "Aucun objet Forever pour l’instant. Ajoute-les au fur et à mesure des annonces avec le formulaire ci-dessus." : "Aucun objet ne correspond."}</div>`}
+    </div>
+  </div>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  document.querySelectorAll("#verSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.version));
+  document.getElementById("period").value = S.period;
+  document.getElementById("group").value = S.group;
+  document.querySelectorAll("#tabs button").forEach(b => { b.setAttribute("role","tab"); b.setAttribute("aria-selected", b.dataset.t === S.tab); });
+  const focusId = document.activeElement?.id, sel = document.activeElement?.selectionStart;
+  const keep = {};
+  ["nmName","nmRole","npName","npOwner","npAlt","npCls","npSpec","niName","niRaid","niBoss","niSlot"].forEach(id => { const el = document.getElementById(id); if (el) keep[id] = el.value; });
+  const V = {overview:vOverview, assign:vAssign, history:vHistory, roster:vRoster, catalog:vCatalog}[S.tab] || vOverview;
+  document.getElementById("view").innerHTML = V();
+  Object.entries(keep).forEach(([id,v]) => { const el = document.getElementById(id); if (!el) return;
+    if (id === "npSpec") el.innerHTML = specOpts(document.getElementById("npCls").value);
+    el.value = v; });
+  if (focusId){ const el = document.getElementById(focusId); if (el){ el.focus(); if (sel != null && el.setSelectionRange) try { el.setSelectionRange(sel, sel); } catch(e){} } }
+}
+
+/* ---------- events ---------- */
+document.getElementById("verSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.version = b.dataset.v; pref("version", S.version); if (b.dataset.v !== "all") { S.asg.version = b.dataset.v; S.catVersion = b.dataset.v; } render(); });
+document.getElementById("period").addEventListener("change", e => { S.period = e.target.value; pref("period", S.period); render(); });
+document.getElementById("group").addEventListener("change", e => { S.group = e.target.value; pref("group", S.group); render(); });
+document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.tab = b.dataset.t; S.armed = null; pref("tab", S.tab); render(); });
+
+const view = document.getElementById("view");
+view.addEventListener("click", async e => {
+  const t = e.target.closest("[data-pick],[data-boss],[data-role],[data-kind],[data-ovrole],[data-sheet],[data-go],[data-hist],[data-give],[data-del-loot],[data-del-player],[data-del-item],#asgVer button,#catVer button");
+  if (!t) return;
+  if (t.dataset.sheet != null){ S.sheet = S.sheet === t.dataset.sheet ? "" : t.dataset.sheet; render(); if (S.sheet) window.scrollTo({top:0, behavior:"smooth"}); return; }
+  if (t.dataset.go){ S.tab = t.dataset.go; pref("tab", S.tab); render(); return; }
+  if (t.dataset.hist){ e.preventDefault(); S.histPlayer = t.dataset.hist; S.tab = "history"; pref("tab", S.tab); render(); return; }
+  if (t.closest("#asgVer")){ S.asg.version = t.dataset.v; S.asg.raid = ""; S.asg.boss = ""; S.asg.itemId = ""; render(); return; }
+  if (t.dataset.pick){ S.asg.itemId = t.dataset.pick; render(); return; }
+  if (t.dataset.boss != null){ S.asg.boss = S.asg.boss === t.dataset.boss ? "" : t.dataset.boss; S.asg.itemId = ""; render(); return; }
+  if (t.dataset.role){ const R = S.asg.roles; R.has(t.dataset.role) ? R.delete(t.dataset.role) : R.add(t.dataset.role); render(); return; }
+  if (t.dataset.kind){ S.asg.kind = t.dataset.kind; render(); return; }
+  if (t.dataset.ovrole != null){ S.ovRole = S.ovRole === t.dataset.ovrole ? "" : t.dataset.ovrole; render(); return; }
+  if (t.closest("#catVer")){ S.catVersion = t.dataset.v; render(); return; }
+  if (t.dataset.give){
+    const it = getItem(S.asg.itemId), p = S.players.get(t.dataset.give);
+    if (!it || !p) return;
+    t.disabled = true;
+    const ref = S.db ? S.db.collection("loots").doc() : null;
+    const ok = await write(() => ref.set({ playerId:p.id, itemId:it.id, itemName:it.name, version:it.version, raid:it.raid||"", boss:it.boss||"",
+      kind:S.asg.kind, date:S.asg.date || today(), group:S.group === "all" ? "" : S.group, by:S.uid || "", createdAt:new Date().toISOString() }));
+    t.disabled = false;
+    if (ok) { toast(`${it.name} attribué à ${p.name}.`, () => write(() => ref.delete())); S.asg.itemId = ""; render(); document.getElementById("asgQ")?.focus(); }
+    return;
+  }
+  const del = [["delLoot","l","loots"],["delPlayer","p","players"],["delItem","i","items"],["delMember","m","members"]].find(([k]) => t.dataset[k]);
+  if (del){
+    const [k, pfx, col] = del, id = t.dataset[k], key = pfx + ":" + id;
+    if (!armed(key)) { arm(key); return; }
+    S.armed = null;
+    if (await write(db => db.doc(col + "/" + id).delete())) toast({l:"Loot supprimé.", p:"Personnage supprimé du roster.", i:"Objet retiré du catalogue.", m:"Joueur supprimé. Ses personnages restent dans le roster."}[pfx]);
+    render();
+  }
+});
+view.addEventListener("change", async e => {
+  const t = e.target;
+  if (t.id === "ovSort"){ S.ovSort = t.value; render(); }
+  else if (t.id === "sheetAll"){ S.sheetAll = t.checked; render(); }
+  else if (t.id === "asgRaid"){ S.asg.raid = t.value; S.asg.boss = ""; S.asg.itemId = ""; pref("raid", t.value); render(); }
+  else if (t.id === "catSrc"){ S.catSrc = t.value; render(); }
+  else if (t.id === "asgItem"){ S.asg.itemId = t.value; S.asg.specs.clear(); render(); }
+  else if (t.id === "asgKind"){ S.asg.kind = t.value; }
+  else if (t.id === "asgDate"){ S.asg.date = t.value; }
+  else if (t.id === "asgAll"){ S.asg.all = t.checked; render(); }
+  else if (t.id === "histPlayer"){ S.histPlayer = t.value; render(); }
+  else if (t.dataset.rank){ await write(db => db.doc("players/" + t.dataset.rank).update({rank:t.value})); }
+  else if (t.dataset.spec){ if (t.value) await write(db => db.doc("players/" + t.dataset.spec).update({spec:t.value})); }
+  else if (t.id === "npCls"){ const s = document.getElementById("npSpec"); if (s) s.innerHTML = specOpts(t.value); }
+  else if (t.dataset.specf != null){ const set = S.asg.specs; t.checked ? set.add(t.dataset.specf) : set.delete(t.dataset.specf); render(); }
+  else if (t.dataset.owner != null){ await write(db => db.doc("players/" + t.dataset.owner).update({owner:t.value})); }
+  else if (t.dataset.alt != null){ await write(db => db.doc("players/" + t.dataset.alt).update({alt:t.value === "1"})); }
+  else if (t.dataset.grp){ const p = S.players.get(t.dataset.grp); const g = new Set(p?.groups||[]); t.checked ? g.add(t.value) : g.delete(t.value); await write(db => db.doc("players/" + t.dataset.grp).update({groups:[...g]})); }
+  else if (t.dataset.drole){ await write(db => db.doc("members/" + t.dataset.drole).update({role:t.value})); }
+  else if (t.id === "rerollsCount"){ await write(db => db.doc("config/settings").set({...S.settings, rerollsCount:t.checked})); }
+  else if (t.dataset.active){ await write(db => db.doc("players/" + t.dataset.active).update({active:t.checked})); }
+});
+view.addEventListener("input", e => {
+  if (e.target.id === "histQ"){ S.histQ = e.target.value; render(); }
+  if (e.target.id === "catQ"){ S.catQ = e.target.value; render(); }
+  if (e.target.id === "asgQ"){ S.asg.q = e.target.value; render(); }
+});
+view.addEventListener("keydown", e => {
+  if (e.target.id === "asgQ" && e.key === "Enter" && S.asgFirst){ e.preventDefault(); S.asg.itemId = S.asgFirst; S.asg.q = ""; render(); }
+  if (e.target.id === "asgQ" && e.key === "Escape"){ S.asg.q = ""; render(); }
+});
+view.addEventListener("submit", async e => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.id === "addMember"){
+    const name = f.querySelector("#nmName").value.trim(); if (!name) return;
+    if ([...S.members.values()].some(m => m.name.toLowerCase() === name.toLowerCase())) { toast(`${name} est déjà dans la liste des joueurs.`); return; }
+    if (await write(db => db.collection("members").doc().set({ name, role:f.querySelector("#nmRole").value, createdAt:new Date().toISOString() }))){ f.querySelector("#nmName").value = ""; toast(`${name} ajouté aux joueurs.`); f.querySelector("#nmName").focus(); }
+  }
+  if (f.id === "addPlayer"){
+    const name = f.querySelector("#npName").value.trim(); if (!name) return;
+    if ([...S.players.values()].some(p => p.name.toLowerCase() === name.toLowerCase())) { toast(`${name} est déjà dans le roster.`); return; }
+    const data = { name, cls:f.querySelector("#npCls").value, spec:f.querySelector("#npSpec").value.trim(), rank:f.querySelector("#npRank").value, owner:f.querySelector("#npOwner").value, alt:f.querySelector("#npAlt").value === "1",
+      groups:[...f.querySelectorAll('input[name="npGrp"]:checked')].map(c => c.value), active:true, createdAt:new Date().toISOString() };
+    if (await write(db => db.collection("players").doc().set(data))){ f.querySelector("#npName").value = ""; toast(`${name} ajouté au roster.`); f.querySelector("#npName").focus(); }
+  }
+  if (f.id === "addItem"){
+    const name = f.querySelector("#niName").value.trim(); if (!name) return;
+    const data = { name, version:f.querySelector("#niVer").value, raid:f.querySelector("#niRaid").value.trim(), boss:f.querySelector("#niBoss").value.trim(),
+      slot:f.querySelector("#niSlot").value.trim(), quality:f.querySelector("#niQual").value,
+      classes:[...f.querySelectorAll('input[name="niCls"]:checked')].map(c => c.value),
+      roles:[...f.querySelectorAll('input[name="niRole"]:checked')].map(c => c.value), order:99, createdAt:new Date().toISOString() };
+    if (await write(db => db.collection("items").doc().set(data))){
+      ["niName","niBoss","niSlot"].forEach(id => f.querySelector("#"+id).value = "");
+      f.querySelectorAll('input[name="niCls"],input[name="niRole"]').forEach(c => c.checked = false);
+      S.catVersion = data.version; toast(`${name} ajouté au catalogue ${VERS[data.version]}.`);
+    }
+  }
+});
+
+/* ---------- infobulles objets ---------- */
+const tipEl = document.getElementById("tip");
+function tipItem(id, name){
+  const it = getItem(id);
+  if (!it) return `<div class="n q-epic">${esc(name||"Objet")}</div><div class="m">Objet hors catalogue</div>`;
+  const stat = (it.stats||[]).filter(x => !/^(Une main|Deux mains|Main droite|Main gauche|Tête|Cou|Épaules|Dos|Torse|Poignets|Mains|Taille|Jambes|Pieds|Anneau|Bijou)$/i.test(x));
+  const cls = knownCls(it);
+  return `<div class="n q-${esc(it.quality||"epic")}">${esc(it.name)}</div>
+    <div class="row2 m"><span>${esc(it.slot||"")}</span>${it.ilvl ? `<span>Niv. ${it.ilvl}</span>` : ""}</div>
+    ${stat.map(x => `<div class="${/^(Equip|Use|Chance on hit):/.test(x) ? "g" : ""}">${esc(x)}</div>`).join("")}
+    <div class="src">${esc([it.raid, it.boss].filter(Boolean).join(" · "))}${it.drop ? ` · ${(it.drop*100).toFixed(1).replace(".",",")} %` : ""}</div>
+    ${cls.length && cls.length < 6 ? `<div class="m">${cls.map(clsName).join(", ")}</div>` : ""}`;
+}
+function tipList(raw){
+  return raw.split("~").map(x => { const [id,name,date,kind] = x.split("|"); const it = getItem(id);
+    return `<div class="row2"><span class="n q-${esc(it?.quality||"epic")}" style="font-size:13px;margin:0">${esc(name)}</span><span class="m">${fmtDate(date)}${kind==="OS"?" · HS":kind==="BiS"?" · BiS":""}</span></div>`; }).join("");
+}
+function showTip(el, x, y){
+  tipEl.innerHTML = el.dataset.items ? tipList(el.dataset.items) : tipItem(el.dataset.item, el.dataset.name);
+  tipEl.hidden = false;
+  const w = tipEl.offsetWidth, h = tipEl.offsetHeight, vw = innerWidth, vh = innerHeight;
+  tipEl.style.left = Math.max(8, Math.min(x + 14, vw - w - 8)) + "px";
+  tipEl.style.top = (y + 16 + h > vh - 8 ? Math.max(8, y - h - 12) : y + 16) + "px";
+}
+const tipTarget = e => e.target.closest?.("[data-item],[data-items]");
+document.addEventListener("mouseover", e => { const el = tipTarget(e); if (el) showTip(el, e.clientX, e.clientY); });
+document.addEventListener("mousemove", e => { if (!tipEl.hidden && tipTarget(e)) showTip(tipTarget(e), e.clientX, e.clientY); });
+document.addEventListener("mouseout", e => { if (tipTarget(e) && !tipTarget({target:e.relatedTarget||document.body})) tipEl.hidden = true; });
+document.addEventListener("click", e => { const el = tipTarget(e); if (el && matchMedia("(hover: none)").matches){ const r = el.getBoundingClientRect(); showTip(el, r.left, r.bottom); } else if (!el) tipEl.hidden = true; });
+addEventListener("scroll", () => { tipEl.hidden = true; }, {passive:true});
+
+/* ---------- boot ---------- */
+render();
+fetch("data/items-classic.json").then(r => r.ok ? r.json() : Promise.reject(r.status)).then(arr => {
+  S.static = new Map(arr.map(x => { const i = fromStatic(x); return [i.id, i]; })); render();
+}).catch(() => toast("Le catalogue Classic n’a pas pu être chargé. Recharge la page."));
+(async () => {
+  const status = document.getElementById("status");
+  const use = window.claude?.use;
+  const [db, user] = use ? await Promise.all([window.claude.use("db"), window.claude.use("user")]) : [null, null];
+  if (!db){ status.textContent = "Le registre partagé n’est pas disponible dans cette vue. Ouvre la page depuis claude.ai en étant connecté."; S.canWrite = false; document.body.classList.add("ro"); render(); return; }
+  S.db = db; S.user = user;
+  if (user){
+    const can = await user.can("data.write");
+    if (can === false){ S.canWrite = false; document.body.classList.add("ro"); }
+    S.uid = await user.id();
+  }
+  const done = () => { if (Object.values(S.loaded).every(Boolean)) status.hidden = true; };
+  const onErr = err => { if (err.code !== "revoked") { status.hidden = false; status.textContent = "La synchronisation s’est interrompue. Recharge la page pour la relancer."; } };
+  const sub = (col, key, map) => db.collection(col).limit(1000).onSnapshot(snap => { map(snap.docs.map(d => ({id:d.id, ...d.data()}))); S.loaded[key] = true; done(); render(); }, onErr);
+  sub("players", "players", rows => { S.players = new Map(rows.map(r => [r.id, r])); });
+  sub("items", "items", rows => { S.items = new Map(rows.map(r => [r.id, r])); });
+  sub("loots", "loots", rows => { S.loots = rows; resolveNames(); });
+  sub("members", "members", rows => { S.members = new Map(rows.map(r => [r.id, r])); });
+  db.doc("config/settings").onSnapshot(d => { S.settings = {rerollsCount:false, ...(d.exists ? d.data() : {})}; render(); }, onErr);
+})();
+
+async function resolveNames(){
+  if (!S.user) return;
+  const ids = [...new Set(S.loots.map(l => l.by).filter(id => id && !(id in S.names)))];
+  if (!ids.length) return;
+  ids.forEach(id => S.names[id] = "");
+  try { const ps = await S.user.profiles(ids); ids.forEach(id => S.names[id] = ps[id]?.name || ""); render(); } catch(e){}
+}
+</script>
